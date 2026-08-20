@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0D1B2A"><title>Mi material — Mañana Rindo</title><meta name="robots" content="noindex,nofollow">
+<style>
+:root{--ink:#0D1B2A;--ink2:#294057;--paper:#F7F5EF;--lime:#B9FF66;--violet:#6B5CFF;--muted:#687787;--line:#DBE2E9;--shadow:0 16px 46px rgba(13,27,42,.10)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 100% 0%,rgba(185,255,102,.30),transparent 28rem),var(--paper);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.shell{width:min(100%,640px);margin:auto;min-height:100vh;padding-bottom:38px}.top{display:flex;justify-content:space-between;align-items:center;padding:18px}
+.logo{font-size:22px;font-weight:950;letter-spacing:-.045em}.logo b{background:var(--lime);padding:2px 7px;border-radius:9px}
+.chip{font-size:11px;font-weight:900;background:#fff;border:1px solid var(--line);padding:7px 9px;border-radius:999px}
+.card{margin:18px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}.loading{text-align:center;padding:40px 20px}
+.spinner{width:34px;height:34px;border:4px solid #E6E9ED;border-top-color:var(--violet);border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}@keyframes s{to{transform:rotate(360deg)}}
+.error{display:none;background:#FFF0F0;color:#A62D2D;border:1px solid #F0C7C7;border-radius:16px;padding:14px;line-height:1.5}.error.show{display:block}
+.pack{display:none}.pack.show{display:block}
+.saved{background:#EBF8F1;border:1px solid #BDE5CE;border-radius:17px;padding:14px 15px;margin-bottom:15px;color:#24563D}.saved b{display:block;font-size:15px;margin-bottom:4px}.saved span{font-size:12px;line-height:1.45}
+.shareRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.shareBtn{border:1px solid #BFD8CA;background:#fff;color:#24563D;border-radius:12px;padding:10px;font-weight:850;cursor:pointer}
+.hero{background:linear-gradient(135deg,#0D1B2A,#183451);color:#fff;border-radius:20px;padding:20px;margin-bottom:18px}.tag{display:inline-block;background:var(--lime);color:var(--ink);font-size:11px;font-weight:950;padding:6px 9px;border-radius:999px;margin-bottom:9px}
+.hero h1{font-size:29px;line-height:1.05;margin:0 0 7px}.hero p{margin:0;color:#D7E0E8;font-size:13px;line-height:1.5}.meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.meta span{font-size:11px;font-weight:850;background:#ffffff14;border:1px solid #ffffff22;padding:6px 8px;border-radius:999px}
+.sec{margin-top:25px}.title{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px}.num{display:grid;place-items:center;flex:0 0 31px;height:31px;border-radius:10px;background:var(--lime);font-size:14px;font-weight:950}.title h2{margin:1px 0 2px;font-size:20px}.title p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+.summary{padding:14px 0;border-bottom:1px solid #E8EDF1}.summary:last-child{border-bottom:0}.summary h3{margin:0 0 6px;font-size:16px}.summary p{margin:0;color:#334B61;font-size:13px;line-height:1.6}
+.keys{margin:9px 0 0;padding-left:18px;color:#334B61}.keys li{font-size:13px;line-height:1.5;margin:4px 0}.example{margin-top:9px;background:#F4F2FF;border:1px solid #DED9FF;border-radius:12px;padding:10px 11px;color:#453B9C;font-size:12px;line-height:1.5}
+.remember{background:#F7F9FA;border:1px solid var(--line);border-radius:14px;padding:13px;margin:7px 0;font-size:13px;line-height:1.45}
+.exercise{border:1px solid var(--line);border-radius:15px;padding:14px;margin:9px 0;background:#fff}.ehead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.enum{font-size:11px;font-weight:950;color:var(--violet)}.difficulty{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px}.facil{background:#E7F5EC;color:#176B45}.similar{background:#FFF0C7;color:#805800}.desafio{background:#FFE4E4;color:#9C2424}.exercise p{margin:0;font-size:14px;line-height:1.5}.opts{display:grid;gap:6px;margin-top:10px}.opt{font-size:12px;border:1px solid #E1E6EB;padding:9px 10px;border-radius:10px;background:#FAFBFC}
+.hint{margin-top:10px}details{border:1px solid var(--line);border-radius:13px;margin:8px 0;background:#FBFCFC}summary{cursor:pointer;padding:12px;font-size:13px;font-weight:900}.answer{padding:0 12px 12px;color:#334B61;font-size:12px;line-height:1.6}
+.plan{display:grid;grid-template-columns:76px 1fr;gap:11px;padding:12px 0;border-bottom:1px solid #E8EDF1}.ptime{font-size:12px;font-weight:950;color:var(--violet)}.plan b{display:block;font-size:13px;margin-bottom:3px}.plan p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
+.ready{display:flex;gap:10px;border:1px solid var(--line);border-radius:13px;padding:11px;margin:7px 0}.ready input{width:18px;height:18px;accent-color:#6B5CFF}.ready span{font-size:13px;line-height:1.4}
+.warn{background:#FFF6DD;border:1px solid #F0DEA9;color:#795000;border-radius:14px;padding:12px 13px;margin-top:14px;font-size:12px;line-height:1.5}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:23px}.action{border:1px solid #C8D1DA;background:#fff;color:var(--ink);border-radius:13px;padding:12px;font-weight:850;cursor:pointer}.action.primary{border:0;background:var(--ink);color:#fff}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+@media print{body{background:#fff}.top,.saved,.actions,footer{display:none!important}.shell{width:100%;max-width:none}.card{box-shadow:none;border:0;margin:0}.exercise,.summary,.plan,details{break-inside:avoid}}
+</style></head>
+<body><main class="shell">
+<header class="top"><div class="logo">Mañana <b>Rindo</b></div><div class="chip">📚 Guardado</div></header>
+<section class="card">
+<div id="loading" class="loading"><div class="spinner"></div><b>Buscando tu material…</b><div style="font-size:12px;color:var(--muted);margin-top:5px">Abrimos exactamente lo que ya habías comprado.</div></div>
+<div id="error" class="error"></div>
+<div id="pack" class="pack">
+ <div class="saved"><b>✅ Tu material está guardado</b><span>Podés cerrar esta página y volver usando este mismo link.</span><div class="shareRow"><button id="copy" class="shareBtn">🔗 Copiar link</button><button id="share" class="shareBtn">📱 Compartir</button></div></div>
+ <div class="hero"><span id="tag" class="tag">PACK LISTO</span><h1 id="heroTitle">Tu material de estudio</h1><p id="intro"></p><div class="meta"><span id="materia"></span><span id="nivel"></span><span id="tiempo"></span></div></div>
+ <div id="content"></div>
+ <div id="warns"></div>
+ <div class="actions"><button id="print" class="action primary">🖨️ Guardar / imprimir</button><button id="home" class="action">＋ Nuevo estudio</button></div>
+</div></section>
+<footer>Mañana Rindo · Pago único · sin suscripción</footer>
+</main>
+<script>
+const GET_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-obtener-pack-v5",HOME_URL="https://www.mananarindo.com/",STORE_KEY="mr_packs_v7";
+const $=x=>document.getElementById(x);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+const nl=s=>esc(s).replace(/\n/g,"<br>");
+function saveCurrent(p){
+ try{
+  const q=new URLSearchParams(location.search),pid=q.get("p");if(!pid)return;
+  let arr=JSON.parse(localStorage.getItem(STORE_KEY)||"[]");
+  arr=arr.filter(x=>x.pack_id!==pid);
+  arr.unshift({pack_id:pid,url:location.href,materia:p.materia||"",nivel:p.nivel||"",tipo_pack:p.tipo_pack||"",saved_at:new Date().toISOString()});
+  localStorage.setItem(STORE_KEY,JSON.stringify(arr.slice(0,25)));
+ }catch{}
+}
+function section(num,title,subtitle,inner){
+ return `<div class="sec"><div class="title"><div class="num">${num}</div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div></div>${inner}</div>`;
+}
+function explanationHTML(p){
+ const blocks=(p.explicacion?.bloques||[]).map(s=>{
+  const keys=(s.puntos_clave||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+  return `<div class="summary"><h3>${esc(s.titulo)}</h3><p>${nl(s.explicacion)}</p>${keys?`<ul class="keys">${keys}</ul>`:""}${s.ejemplo?`<div class="example"><b>Ejemplo:</b> ${nl(s.ejemplo)}</div>`:""}</div>`;
+ }).join("");
+ const rem=(p.explicacion?.recordar||[]).map(x=>`<div class="remember">🎯 ${esc(x)}</div>`).join("");
+ return {blocks,rem};
+}
+function practiceHTML(p){
+ const ex=(p.practica?.ejercicios||[]).map(q=>{
+  const opts=(q.opciones||[]).map(o=>`<div class="opt">${esc(o)}</div>`).join("");
+  return `<div class="exercise"><div class="ehead"><span class="enum">EJERCICIO ${esc(q.numero)}</span><span class="difficulty ${esc(q.dificultad)}">${esc(q.dificultad.toUpperCase())}</span></div><p>${nl(q.consigna)}</p>${opts?`<div class="opts">${opts}</div>`:""}${q.pista?`<details class="hint"><summary>💡 Ver pista</summary><div class="answer">${nl(q.pista)}</div></details>`:""}</div>`;
+ }).join("");
+ const ans=(p.practica?.respuestas||[]).map(a=>`<details><summary>Ejercicio ${esc(a.numero)} · Ver solución</summary><div class="answer"><b>Respuesta:</b> ${nl(a.respuesta)}<br><br>${nl(a.explicacion)}</div></details>`).join("");
+ return {ex,ans};
+}
+function planHTML(p){return (p.plan_estudio?.bloques||[]).map(b=>`<div class="plan"><div class="ptime">${esc(b.duracion)}</div><div><b>${esc(b.titulo)}</b><p>${esc(b.accion)}</p></div></div>`).join("")}
+function checkHTML(p){return (p.checklist||[]).map(x=>`<label class="ready"><input type="checkbox"><span>${esc(x)}</span></label>`).join("")}
+function render(p){
+ saveCurrent(p);$("loading").style.display="none";$("pack").classList.add("show");
+ $("intro").textContent=p.intro||"";$("materia").textContent="📘 "+(p.materia||"");$("nivel").textContent="🎓 "+(p.nivel||"");$("tiempo").textContent="⏱️ "+(p.tiempo_total||"");
+ const tipo=p.tipo_pack||"completo",e=explanationHTML(p),pr=practiceHTML(p);let n=1,html="";
+ if(tipo==="entender"){$("tag").textContent="🧠 ENTENDER";$("heroTitle").textContent="Tu explicación está lista";
+  html+=section(n++,"Entendé el tema","Tus apuntes explicados de forma simple y en profundidad.",e.blocks);
+  html+=section(n++,"Lo que tenés que recordar","Las ideas que conviene poder explicar sin mirar.",e.rem);
+  html+=section(n++,"Tu plan de estudio","Cómo aprovechar el tiempo que tenés.",planHTML(p));
+  html+=section(n++,"¿Lo entendí?","Marcá lo que ya podés explicar con tus palabras.",checkHTML(p));
+ } else if(tipo==="practicar"){$("tag").textContent="✏️ PRACTICAR";$("heroTitle").textContent="Tu práctica está lista";
+  if(e.rem)html+=section(n++,"Antes de empezar","Recordatorios mínimos para resolver los ejercicios.",e.rem);
+  html+=section(n++,"Ejercicios para practicar",p.practica?.instrucciones||"Nuevos ejercicios basados en tus apuntes.",pr.ex);
+  html+=section(n++,"Soluciones explicadas","Abrilas después de intentar cada ejercicio.",pr.ans);
+  html+=section(n++,"Cómo usar tu tiempo","Practicá, corregí y repetí lo que salió mal.",planHTML(p));
+  html+=section(n++,"¿Estoy listo?","Marcá lo que ya podés resolver sin ayuda.",checkHTML(p));
+ } else {$("tag").textContent="⭐ COMPLETO";$("heroTitle").textContent="Tu repaso completo está listo";
+  html+=section(n++,"Entendé el tema","Primero, tus apuntes explicados de forma simple.",e.blocks);
+  html+=section(n++,"Lo que tenés que recordar","Las ideas centrales antes de practicar.",e.rem);
+  html+=section(n++,"Ejercicios para practicar",p.practica?.instrucciones||"Ahora ponelo en práctica.",pr.ex);
+  html+=section(n++,"Soluciones explicadas","Corregite y entendé dónde estuvo el error.",pr.ans);
+  html+=section(n++,"Tu plan de estudio","Cómo combinar comprensión y práctica.",planHTML(p));
+  html+=section(n++,"¿Estoy listo?","Marcá lo que ya podés hacer sin ayuda.",checkHTML(p));
+ }
+ $("content").innerHTML=html;$("warns").innerHTML="";
+ (p.advertencias||[]).forEach(w=>{const d=document.createElement("div");d.className="warn";d.textContent=w;$("warns").appendChild(d)})
+}
+async function load(){
+ const q=new URLSearchParams(location.search),p=q.get("p"),k=q.get("k");
+ if(!p||!k){$("loading").style.display="none";$("error").classList.add("show");$("error").textContent="Este link está incompleto.";return}
+ try{const u=new URL(GET_URL);u.searchParams.set("p",p);u.searchParams.set("k",k);const r=await fetch(u.href,{cache:"no-store"}),d=await r.json();if(!d.ok)throw Error(d.error||"No encontramos tu material.");render(d.pack)}catch(e){$("loading").style.display="none";$("error").classList.add("show");$("error").textContent=e.message}
+}
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$("copy").textContent="✅ Link copiado"}catch{prompt("Copiá este link:",location.href)}};
+$("share").onclick=async()=>{if(navigator.share){try{await navigator.share({title:"Mi material de Mañana Rindo",url:location.href})}catch{}}else{$("copy").click()}};
+$("print").onclick=()=>print();const homeBtn=$("home");if(homeBtn)homeBtn.onclick=()=>location.href=HOME_URL;
+load();
+</script></body></html>
