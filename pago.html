@@ -4,93 +4,452 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D1B2A">
-<meta name="robots" content="noindex,nofollow">
-<title>Preparando tu material — Mañana Rindo</title>
+<title>Mañana Rindo — Preparando tu material</title>
 <style>
-:root{--ink:#0D1B2A;--lime:#B9FF66;--paper:#F7F5EF;--muted:#687787;--violet:#6B5CFF;--line:#DBE2E9}
+:root{
+  --ink:#0D1B2A;
+  --lime:#B9FF66;
+  --paper:#F7F5EF;
+  --muted:#687787;
+  --violet:#6B5CFF;
+  --line:#DBE2E9;
+  --soft:#F5F3FF;
+}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(circle at 100% 0%,rgba(185,255,102,.30),transparent 28rem),var(--paper);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
-.wrap{max-width:520px;margin:auto;min-height:100vh;padding:24px 18px;display:grid;place-items:center}
-.card{width:100%;background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 18px 50px #0d1b2a14;text-align:center}
-.logo{font-size:24px;font-weight:950;margin-bottom:23px;letter-spacing:-.04em}.logo b{background:var(--lime);padding:2px 7px;border-radius:9px}
-.ico{font-size:48px}h1{font-size:28px;line-height:1.08;margin:10px 0}p{font-size:14px;color:var(--muted);line-height:1.55}
-.spin{width:36px;height:36px;border-radius:50%;border:4px solid #E7EAF0;border-top-color:var(--violet);animation:s 1s linear infinite;margin:19px auto}
-@keyframes s{to{transform:rotate(360deg)}}
-.btn{display:none;width:100%;border:0;background:var(--lime);color:var(--ink);padding:15px;border-radius:14px;font-weight:950;font-size:16px;text-decoration:none;margin-top:15px}
-.small{font-size:11px;color:#8A95A0;margin-top:13px;line-height:1.45}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(185,255,102,.28),transparent 28rem),
+    var(--paper);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--ink);
+}
+.wrap{
+  max-width:520px;
+  margin:auto;
+  min-height:100vh;
+  padding:22px 18px;
+  display:grid;
+  place-items:center;
+}
+.card{
+  width:100%;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:25px;
+  padding:26px 22px 22px;
+  box-shadow:0 18px 52px rgba(13,27,42,.10);
+  text-align:center;
+}
+.logo{
+  font-size:24px;
+  font-weight:950;
+  letter-spacing:-.045em;
+  margin-bottom:19px;
+}
+.logo b{
+  background:var(--lime);
+  padding:2px 7px;
+  border-radius:9px;
+}
+.ico{font-size:42px;line-height:1}
+h1{
+  font-size:29px;
+  line-height:1.08;
+  letter-spacing:-.035em;
+  margin:12px 0 8px;
+}
+.lead{
+  margin:0 auto;
+  max-width:390px;
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* Circular progress */
+.progressWrap{
+  position:relative;
+  width:146px;
+  height:146px;
+  margin:22px auto 17px;
+}
+.progressSvg{
+  width:146px;
+  height:146px;
+  transform:rotate(-90deg);
+  overflow:visible;
+}
+.progressTrack{
+  fill:none;
+  stroke:#E9EDF2;
+  stroke-width:10;
+}
+.progressValue{
+  fill:none;
+  stroke:var(--violet);
+  stroke-width:10;
+  stroke-linecap:round;
+  stroke-dasharray:377;
+  stroke-dashoffset:377;
+  filter:drop-shadow(0 4px 8px rgba(107,92,255,.20));
+  transition:stroke-dashoffset .35s ease;
+}
+.progressCenter{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  align-content:center;
+}
+.progressNumber{
+  font-size:35px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:-.05em;
+}
+.progressNumber small{
+  font-size:16px;
+  font-weight:900;
+  margin-left:1px;
+}
+.progressCaption{
+  margin-top:5px;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:900;
+  color:#8A95A0;
+}
+.stageBox{
+  min-height:67px;
+  border-radius:16px;
+  padding:13px 14px;
+  background:var(--soft);
+  border:1px solid #DED9FF;
+  text-align:left;
+}
+.stageTitle{
+  font-size:14px;
+  font-weight:950;
+  color:#453B9C;
+  margin-bottom:3px;
+  transition:opacity .18s ease;
+}
+.stageDetail{
+  font-size:12px;
+  color:#6C64A9;
+  line-height:1.45;
+  transition:opacity .18s ease;
+}
+.steps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:14px;
+}
+.step{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid #E4E9EE;
+  background:#FAFBFC;
+  color:#8A95A0;
+  border-radius:12px;
+  padding:9px 10px;
+  font-size:10px;
+  font-weight:850;
+  text-align:left;
+  transition:.25s ease;
+}
+.stepDot{
+  flex:0 0 18px;
+  width:18px;height:18px;
+  border-radius:999px;
+  display:grid;place-items:center;
+  background:#E9EDF1;
+  color:#81909E;
+  font-size:10px;
+}
+.step.active{
+  border-color:#D8D2FF;
+  background:#F5F3FF;
+  color:#4D42C9;
+}
+.step.active .stepDot{
+  background:var(--violet);
+  color:#fff;
+}
+.step.done{
+  border-color:#CFE8D8;
+  background:#F1FAF5;
+  color:#2F6B49;
+}
+.step.done .stepDot{
+  background:#D7F4E2;
+  color:#217044;
+}
+.small{
+  font-size:11px;
+  color:#8A95A0;
+  line-height:1.45;
+  margin-top:15px;
+}
+.btn{
+  display:none;
+  width:100%;
+  border:0;
+  background:var(--lime);
+  color:var(--ink);
+  padding:15px;
+  border-radius:14px;
+  font-weight:950;
+  font-size:16px;
+  text-decoration:none;
+  margin-top:17px;
+}
+.readyPulse{
+  animation:readyPulse .55s ease both;
+}
+@keyframes readyPulse{
+  0%{transform:scale(.96);opacity:.7}
+  100%{transform:scale(1);opacity:1}
+}
+@media(max-width:370px){
+  .card{padding:23px 17px 20px}
+  h1{font-size:26px}
+  .progressWrap,.progressSvg{width:132px;height:132px}
+  .steps{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<main class="wrap"><section class="card">
-<div class="logo">Mañana <b>Rindo</b></div>
-<div id="ico" class="ico">⏳</div>
-<h1 id="title">Estamos confirmando tu pago</h1>
-<p id="msg">Cuando Mercado Pago lo confirme, preparamos exactamente la opción que elegiste.</p>
-<div id="spin" class="spin"></div>
-<a id="retry" class="btn" href="#">Intentar pagar nuevamente</a>
-<div class="small">Tu material se guarda automáticamente cuando termina. Podés volver a abrirlo después.</div>
-</section></main>
+<main class="wrap">
+<section class="card" id="card">
+  <div class="logo">Mañana <b>Rindo</b></div>
+  <div id="ico" class="ico">✅</div>
+  <h1 id="title">¡Pago realizado!</h1>
+  <p id="msg" class="lead">Pago confirmado. Ya estamos preparando tu material personalizado.</p>
+
+  <div id="progressArea">
+    <div class="progressWrap">
+      <svg class="progressSvg" viewBox="0 0 140 140" aria-hidden="true">
+        <circle class="progressTrack" cx="70" cy="70" r="60"></circle>
+        <circle id="ring" class="progressValue" cx="70" cy="70" r="60"></circle>
+      </svg>
+      <div class="progressCenter">
+        <div id="percent" class="progressNumber">8<small>%</small></div>
+        <div class="progressCaption">Preparando</div>
+      </div>
+    </div>
+
+    <div class="stageBox">
+      <div id="stageTitle" class="stageTitle">Organizando tu material</div>
+      <div id="stageDetail" class="stageDetail">Estamos acomodando la información de tus apuntes para trabajar sobre ella.</div>
+    </div>
+
+    <div class="steps" id="steps">
+      <div class="step active" data-step="0"><span class="stepDot">1</span><span>Ordenando apuntes</span></div>
+      <div class="step" data-step="1"><span class="stepDot">2</span><span>Detectando lo importante</span></div>
+      <div class="step" data-step="2"><span class="stepDot">3</span><span>Creando tu material</span></div>
+      <div class="step" data-step="3"><span class="stepDot">4</span><span>Revisión final</span></div>
+    </div>
+  </div>
+
+  <a id="retry" class="btn" href="#">Intentar pagar nuevamente</a>
+  <div id="small" class="small">No hace falta actualizar la página. Cuando termine, abrimos tu material automáticamente.</div>
+</section>
+</main>
+
 <script>
-const STATUS_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-estado-orden-prod-v1";
+const STATUS_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-estado-orden-v7";
 const q=new URLSearchParams(location.search);
 const orderId=q.get("order_id");
 const result=q.get("result")||q.get("status")||"";
-const title=document.getElementById("title"),msg=document.getElementById("msg"),ico=document.getElementById("ico"),spin=document.getElementById("spin"),retry=document.getElementById("retry");
 
-if(result==="failure"){
- title.textContent="El pago no se completó";
- msg.textContent="No generamos el material. Podés volver a intentarlo.";
- ico.textContent="❌";spin.style.display="none";
-} else if(result==="pending"){
- title.textContent="Tu pago está pendiente";
- msg.textContent="Cuando Mercado Pago lo apruebe, vamos a preparar el material automáticamente.";
- ico.textContent="🕒";
-} else if(result==="success"){
- title.textContent="¡Pago realizado!";
- msg.textContent="Ahora estamos preparando tu material personalizado.";
- ico.textContent="✅";
+const title=document.getElementById("title");
+const msg=document.getElementById("msg");
+const ico=document.getElementById("ico");
+const retry=document.getElementById("retry");
+const progressArea=document.getElementById("progressArea");
+const ring=document.getElementById("ring");
+const percent=document.getElementById("percent");
+const stageTitle=document.getElementById("stageTitle");
+const stageDetail=document.getElementById("stageDetail");
+const small=document.getElementById("small");
+const card=document.getElementById("card");
+const stepEls=[...document.querySelectorAll(".step")];
+
+const CIRC=2*Math.PI*60;
+ring.style.strokeDasharray=CIRC;
+
+let finished=false;
+let currentProgress=8;
+let pollCount=0;
+const startedAt=Date.now();
+
+const stages=[
+  {
+    min:0,max:24,step:0,
+    title:"Organizando tu material",
+    detail:"Estamos acomodando la información de tus apuntes para trabajar sobre ella."
+  },
+  {
+    min:24,max:46,step:1,
+    title:"Leyendo tus apuntes en profundidad",
+    detail:"Identificamos los temas, datos y tipos de ejercicios que aparecen en tu material."
+  },
+  {
+    min:46,max:72,step:2,
+    title:"Creando tu material personalizado",
+    detail:"Estamos armando explicaciones, ejercicios y práctica adaptados a lo que subiste."
+  },
+  {
+    min:72,max:90,step:3,
+    title:"Revisando ejercicios y respuestas",
+    detail:"Comprobamos que el contenido sea claro, consistente y útil para estudiar."
+  },
+  {
+    min:90,max:101,step:3,
+    title:"Últimos detalles",
+    detail:"Estamos guardando tu Pack y preparando el acceso."
+  }
+];
+
+function setProgress(value){
+  currentProgress=Math.max(0,Math.min(100,value));
+  ring.style.strokeDashoffset=CIRC*(1-currentProgress/100);
+  percent.innerHTML=Math.round(currentProgress)+"<small>%</small>";
+
+  const st=stages.find(x=>currentProgress>=x.min&&currentProgress<x.max)||stages[stages.length-1];
+  if(stageTitle.textContent!==st.title){
+    stageTitle.style.opacity=".25";
+    stageDetail.style.opacity=".25";
+    setTimeout(()=>{
+      stageTitle.textContent=st.title;
+      stageDetail.textContent=st.detail;
+      stageTitle.style.opacity="1";
+      stageDetail.style.opacity="1";
+    },140);
+  }
+
+  stepEls.forEach((el,i)=>{
+    el.classList.toggle("done",i<st.step);
+    el.classList.toggle("active",i===st.step);
+    const dot=el.querySelector(".stepDot");
+    if(i<st.step)dot.textContent="✓";
+    else dot.textContent=String(i+1);
+  });
 }
 
-let pollAttempt=0;
-const SUCCESS_DELAYS=[10000,12000,15000,20000,25000,30000];
-const PENDING_DELAYS=[15000,20000,30000,45000,60000];
+/* Porcentaje aproximado:
+   avanza rápido al principio y se frena cerca de 96%.
+   Nunca muestra 100% hasta que el servidor confirma que el Pack está listo. */
+function expectedProgress(seconds){
+  if(seconds<5)  return 8 +(seconds/5)*12;         // 8 -> 20
+  if(seconds<12) return 20+((seconds-5)/7)*18;     // 20 -> 38
+  if(seconds<20) return 38+((seconds-12)/8)*20;    // 38 -> 58
+  if(seconds<30) return 58+((seconds-20)/10)*18;   // 58 -> 76
+  if(seconds<42) return 76+((seconds-30)/12)*13;   // 76 -> 89
+  if(seconds<58) return 89+((seconds-42)/16)*5;    // 89 -> 94
+  return Math.min(96.5,94+2.5*(1-Math.exp(-(seconds-58)/28)));
+}
 
-function nextDelay(){
- const list=result==="pending"?PENDING_DELAYS:SUCCESS_DELAYS;
- return list[Math.min(pollAttempt,list.length-1)];
+function animate(){
+  if(finished)return;
+  const seconds=(Date.now()-startedAt)/1000;
+  const target=expectedProgress(seconds);
+  currentProgress += (target-currentProgress)*0.16;
+  setProgress(currentProgress);
+  requestAnimationFrame(animate);
 }
-function updateWaitingMessage(){
- if(result==="success"){
-  const messages=[
-   "Pago confirmado. Estamos leyendo tus apuntes en profundidad.",
-   "Estamos armando tu material personalizado.",
-   "Estamos revisando ejercicios, explicaciones y respuestas.",
-   "Ya falta poco. Estamos guardando tu material."
-  ];
-  msg.textContent=messages[Math.min(pollAttempt,messages.length-1)];
- }
+
+function configureInitialState(){
+  if(result==="failure"){
+    title.textContent="El pago no se completó";
+    msg.textContent="No generamos el material. Podés volver a intentarlo.";
+    ico.textContent="❌";
+    progressArea.style.display="none";
+    small.textContent="Si Mercado Pago no realizó el cobro, podés volver a intentarlo.";
+    return;
+  }
+
+  if(result==="pending"){
+    title.textContent="Tu pago está pendiente";
+    msg.textContent="Mercado Pago todavía está procesando la operación.";
+    ico.textContent="🕒";
+    setProgress(5);
+    stageTitle.textContent="Esperando confirmación de Mercado Pago";
+    stageDetail.textContent="En cuanto se apruebe el pago, preparamos el material automáticamente.";
+    return;
+  }
+
+  title.textContent="¡Pago realizado!";
+  msg.textContent="Pago confirmado. Ya estamos preparando tu material personalizado.";
+  ico.textContent="✅";
 }
+
+function pollDelay(){
+  if(pollCount<3)return 3500;
+  if(pollCount<8)return 5000;
+  return 7000;
+}
+
 async function poll(){
- if(!orderId)return;
- updateWaitingMessage();
- try{
-  const u=new URL(STATUS_URL);u.searchParams.set("order_id",orderId);
-  const r=await fetch(u.href,{cache:"no-store"});
-  const d=await r.json();
-  if(d.status==="ready"&&d.pack_url){
-   title.textContent="¡Está listo!";
-   msg.textContent="Abriendo tu material…";
-   ico.textContent="🎉";spin.style.display="none";
-   location.replace(d.pack_url);
-   return;
+  if(!orderId||finished)return;
+
+  try{
+    const u=new URL(STATUS_URL);
+    u.searchParams.set("order_id",orderId);
+
+    const r=await fetch(u.href,{cache:"no-store"});
+    const d=await r.json();
+
+    if(d.status==="ready"&&d.pack_url){
+      finished=true;
+      setProgress(100);
+      stepEls.forEach(el=>{
+        el.classList.remove("active");
+        el.classList.add("done");
+        el.querySelector(".stepDot").textContent="✓";
+      });
+      title.textContent="¡Está listo!";
+      msg.textContent="Terminamos de preparar tu material.";
+      ico.textContent="🎉";
+      stageTitle.textContent="Pack terminado";
+      stageDetail.textContent="Abriendo tu material…";
+      small.textContent="Te llevamos automáticamente.";
+      card.classList.add("readyPulse");
+
+      setTimeout(()=>location.replace(d.pack_url),700);
+      return;
+    }
+
+    if(d.checkout_url&&result==="failure"){
+      retry.href=d.checkout_url;
+      retry.style.display="block";
+      return;
+    }
+  }catch(e){
+    // Si una consulta falla, no mostramos error al usuario:
+    // seguimos animando y reintentamos.
   }
-  if(d.checkout_url&&result==="failure"){
-   retry.href=d.checkout_url;retry.style.display="block";return;
-  }
- }catch(e){}
- pollAttempt++;
- setTimeout(poll,nextDelay());
+
+  pollCount++;
+  setTimeout(poll,pollDelay());
 }
-if(orderId&&result!=="failure") setTimeout(poll,nextDelay());
+
+configureInitialState();
+
+if(result!=="failure"){
+  setProgress(result==="pending"?5:8);
+  requestAnimationFrame(animate);
+}
+
+if(orderId&&result!=="failure"){
+  setTimeout(poll,1200);
+}
 </script>
-</body></html>
+</body>
+</html>
