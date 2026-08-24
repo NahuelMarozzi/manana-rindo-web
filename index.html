@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9TQHZRCX0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-R9TQHZRCX0');
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D1B2A">
@@ -323,6 +331,15 @@
 <div id="dev" class="dev"></div><footer>Pago único · sin suscripción · sin crear una cuenta</footer>
 </main>
 <script>
+
+function trackMR(name,params={}){
+  try{
+    if(typeof gtag==="function"){
+      gtag("event",name,{...params,transport_type:"beacon"});
+    }
+  }catch{}
+}
+
 const CONFIG={UPLOAD_WEBHOOK:"https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-subir-fotos-v5",ANALYZE_WEBHOOK:"https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-analizar-v7",CHECKOUT_WEBHOOK:"https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-crear-checkout-prod-v1",GET_PACK_WEBHOOK:"https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-obtener-pack-v5",MAX_FILES:30,UPLOAD_BATCH:4,TARGET_IMAGE_MB:1.7,UPLOAD_MAX_SIDE:2200};
 const $=x=>document.getElementById(x),E={files:$("files"),list:$("fileList"),photoCounter:$("photoCounter"),drop:$("drop"),materia:$("materia"),nivel:$("nivel"),tiempo:$("tiempo"),fecha:$("fecha"),btn:$("btn"),progress:$("progress"),bar:$("bar"),pct:$("pct"),plabel:$("plabel"),status:$("status"),notice:$("notice"),result:$("result"),rtitle:$("rtitle"),rsummary:$("rsummary"),matter:$("matter"),topics:$("topics"),quality:$("quality"),warnings:$("warnings"),subjectChip:$("subjectChip"),reviewPhotos:$("reviewPhotos"),generatePackBtn:$("generatePackBtn"),packLoading:$("packLoading"),packResult:$("packResult"),packBar:$("packBar"),packPct:$("packPct"),packProgressLabel:$("packProgressLabel"),packStatus:$("packStatus"),packIntro:$("packIntro"),packMateria:$("packMateria"),packNivel:$("packNivel"),packTiempo:$("packTiempo"),packSummary:$("packSummary"),packPriorities:$("packPriorities"),examInstructions:$("examInstructions"),packQuestions:$("packQuestions"),packAnswers:$("packAnswers"),packPlan:$("packPlan"),packChecklist:$("packChecklist"),packWarnings:$("packWarnings"),printPack:$("printPack"),backTop:$("backTop"),stepLabel:$("stepLabel"),dev:$("dev"),myPacksCard:$("myPacksCard"),myPacksList:$("myPacksList")};let selected=[],lastAnalysis=null,uploadedFiles=[],orderId=null,selectedPackType='completo';
 (()=>{const d=new Date();d.setDate(d.getDate()+1);E.fecha.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");const q=new URLSearchParams(location.search).get("webhook");if(q)localStorage.setItem("mr_webhook",q);const saved=localStorage.getItem("mr_webhook");if(saved&&CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_"))CONFIG.ANALYZE_WEBHOOK=saved;if(CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_")){E.dev.classList.add("show");E.dev.innerHTML='<b>Falta conectar n8n.</b> Para probar sin editar el archivo abrilo agregando <code>?webhook=URL_DE_PRODUCCION</code> a la dirección.'}})();
@@ -366,7 +383,7 @@ renderSavedPacks();
 
 function resetUploaded(){uploadedFiles=[];orderId=null;lastAnalysis=null;E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show")}
 function render(){resetUploaded();E.list.innerHTML="";E.photoCounter.textContent=`${selected.length} / ${CONFIG.MAX_FILES} fotos agregadas`;selected.forEach((f,i)=>{const x=document.createElement("div");x.className="file";x.innerHTML=`<span>🖼️</span><span class="name">${esc(f.name)}</span><span class="meta">${human(f.size)}</span>`;x.title="Tocá para quitar esta foto";x.onclick=()=>{selected.splice(i,1);render();validate()};E.list.appendChild(x)})}
-E.files.onchange=()=>{clear();const add=[...E.files.files];if(selected.length+add.length>CONFIG.MAX_FILES)return notice(`Podés subir hasta <b>${CONFIG.MAX_FILES} fotos</b>. Ahora tenés ${selected.length}.`);for(const f of add){if(!f.type.startsWith("image/"))return notice(`Solo aceptamos fotos. <b>${esc(f.name)}</b> no es una imagen.`)}selected.push(...add);E.files.value="";render();validate()};[E.materia,E.nivel,E.tiempo,E.fecha].forEach(x=>{x.oninput=validate;x.onchange=validate});
+E.files.onchange=()=>{clear();const add=[...E.files.files];if(selected.length+add.length>CONFIG.MAX_FILES)return notice(`Podés subir hasta <b>${CONFIG.MAX_FILES} fotos</b>. Ahora tenés ${selected.length}.`);for(const f of add){if(!f.type.startsWith("image/"))return notice(`Solo aceptamos fotos. <b>${esc(f.name)}</b> no es una imagen.`)}selected.push(...add);trackMR("photos_selected",{files_added:add.length,files_total:selected.length});E.files.value="";render();validate()};[E.materia,E.nivel,E.tiempo,E.fecha].forEach(x=>{x.oninput=validate;x.onchange=validate});
 ["dragenter","dragover"].forEach(ev=>E.drop.addEventListener(ev,e=>{e.preventDefault();E.drop.classList.add("drag")}));["dragleave","drop"].forEach(ev=>E.drop.addEventListener(ev,e=>{e.preventDefault();E.drop.classList.remove("drag")}));
 function prog(p,l,s=""){E.progress.classList.add("show");E.bar.style.width=p+"%";E.pct.textContent=Math.round(p)+"%";E.plabel.textContent=l;E.status.textContent=s}function dataURL(file){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(file)})}
 function loadImg(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src})}
@@ -459,7 +476,7 @@ function setRecommendation(tipo,motivo){
   if(rr)rr.innerHTML=`<b>Nuestra recomendación:</b> ${esc(motivo||"Elegimos la opción que mejor coincide con el tipo de material que subiste.")}`;
   selectPackType(valid);
 }
-document.querySelectorAll(".productCard").forEach(c=>c.addEventListener("click",()=>selectPackType(c.dataset.pack)));
+document.querySelectorAll(".productCard").forEach(c=>c.addEventListener("click",()=>{selectPackType(c.dataset.pack);const info=PRODUCT_INFO[c.dataset.pack];trackMR("pack_selected",{pack_type:c.dataset.pack,value:info?.price||0,currency:"ARS"});}));
 
 function renderResult(a){
   lastAnalysis=a;
@@ -616,7 +633,9 @@ E.generatePackBtn.onclick=async()=>{
     const raw=await r.text();let data;
     try{data=JSON.parse(raw)}catch{throw Error("n8n respondió algo que no es JSON: "+raw.slice(0,180))}
     if(!r.ok||data.ok===false||!data.checkout_url)throw Error(data.error||data.message||"No pudimos iniciar el pago.");
-    window.location.href=data.checkout_url;
+    trackMR("checkout_started",{pack_type:selectedPackType,value:info.price,currency:"ARS",materia:E.materia.value.trim(),nivel:E.nivel.value});
+    trackMR("begin_checkout",{currency:"ARS",value:info.price,items:[{item_id:"manana-rindo-"+selectedPackType,item_name:info.label,price:info.price,quantity:1}]});
+    setTimeout(()=>{window.location.href=data.checkout_url;},180);
   }catch(e){
     notice(`<b>No pudimos abrir Mercado Pago.</b><br>${esc(e.message)}`);
     E.generatePackBtn.disabled=false;
@@ -627,6 +646,7 @@ E.printPack.onclick=()=>window.print();
 E.backTop.onclick=()=>scrollTo({top:0,behavior:"smooth"});
 
 E.btn.onclick=async()=>{
+  trackMR("analysis_started",{files_count:selected.length,materia:E.materia.value.trim(),nivel:E.nivel.value,tiempo:E.tiempo.value});
   clear();E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show");E.btn.disabled=true;E.drop.classList.add("uploadBusy");
   try{
     if(CONFIG.UPLOAD_WEBHOOK.includes("PEGAR_")||CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_"))throw Error("Falta conectar n8n.");
@@ -637,7 +657,10 @@ E.btn.onclick=async()=>{
     prog(84,"Leyendo tus apuntes…","Detectando temas y verificando que se entiendan.");
     const raw=await r.text();let data;try{data=JSON.parse(raw)}catch{throw Error("n8n respondió algo que no es JSON: "+raw.slice(0,160))}
     if(!r.ok||data.ok===false)throw Error(data.error||data.message||`HTTP ${r.status}`);
-    renderResult(data.analysis||data);prog(100,"Listo",`${refs.length} fotos analizadas.`);setTimeout(()=>E.result.scrollIntoView({behavior:"smooth"}),200)
+    const analysisResult=data.analysis||data;
+    renderResult(analysisResult);
+    trackMR("analysis_completed",{files_count:refs.length,status:String(analysisResult?.status||""),can_generate:analysisResult?.puede_generar_pack!==false,recommendation:String(analysisResult?.recomendacion||"")});
+    prog(100,"Listo",`${refs.length} fotos analizadas.`);setTimeout(()=>E.result.scrollIntoView({behavior:"smooth"}),200)
   }catch(e){notice(`<b>No pudimos completar el análisis.</b><br>${esc(e.message)}`);prog(0,"No se pudo analizar","Tus fotos siguen seleccionadas. Corregí el problema y reintentá.")}
   finally{E.drop.classList.remove("uploadBusy");validate()}
 };

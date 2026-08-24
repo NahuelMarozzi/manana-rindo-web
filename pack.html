@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9TQHZRCX0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-R9TQHZRCX0');
+</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D1B2A"><title>Mi material — Mañana Rindo</title><meta name="robots" content="noindex,nofollow">
 <style>
@@ -45,6 +53,15 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <footer>Mañana Rindo · Pago único · sin suscripción</footer>
 </main>
 <script>
+
+function trackMR(name,params={}){
+  try{
+    if(typeof gtag==="function"){
+      gtag("event",name,{...params,transport_type:"beacon"});
+    }
+  }catch{}
+}
+
 const GET_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-obtener-pack-v5",HOME_URL="https://www.mananarindo.com/",STORE_KEY="mr_packs_v7";
 const $=x=>document.getElementById(x);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
@@ -80,7 +97,18 @@ function practiceHTML(p){
 function planHTML(p){return (p.plan_estudio?.bloques||[]).map(b=>`<div class="plan"><div class="ptime">${esc(b.duracion)}</div><div><b>${esc(b.titulo)}</b><p>${esc(b.accion)}</p></div></div>`).join("")}
 function checkHTML(p){return (p.checklist||[]).map(x=>`<label class="ready"><input type="checkbox"><span>${esc(x)}</span></label>`).join("")}
 function render(p){
- saveCurrent(p);$("loading").style.display="none";$("pack").classList.add("show");
+ saveCurrent(p);
+ const q=new URLSearchParams(location.search),pid=q.get("p")||"";
+ const gaKey="mr_ga_pack_opened_"+pid;
+ if(pid&&!sessionStorage.getItem(gaKey)){
+  sessionStorage.setItem(gaKey,"1");
+  trackMR("pack_opened",{
+   pack_type:String(p.tipo_pack||""),
+   materia:String(p.materia||""),
+   nivel:String(p.nivel||"")
+  });
+ }
+ $("loading").style.display="none";$("pack").classList.add("show");
  $("intro").textContent=p.intro||"";$("materia").textContent="📘 "+(p.materia||"");$("nivel").textContent="🎓 "+(p.nivel||"");$("tiempo").textContent="⏱️ "+(p.tiempo_total||"");
  const tipo=p.tipo_pack||"completo",e=explanationHTML(p),pr=practiceHTML(p);let n=1,html="";
  if(tipo==="entender"){$("tag").textContent="🧠 ENTENDER";$("heroTitle").textContent="Tu explicación está lista";

@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9TQHZRCX0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-R9TQHZRCX0');
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D1B2A">
@@ -263,6 +271,15 @@ h1{
 </main>
 
 <script>
+
+function trackMR(name,params={}){
+  try{
+    if(typeof gtag==="function"){
+      gtag("event",name,{...params,transport_type:"beacon"});
+    }
+  }catch{}
+}
+
 const STATUS_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-estado-orden-v7";
 const q=new URLSearchParams(location.search);
 const orderId=q.get("order_id");
@@ -288,6 +305,17 @@ let finished=false;
 let currentProgress=8;
 let pollCount=0;
 const startedAt=Date.now();
+
+(function trackPaymentReturnOnce(){
+  if(!orderId)return;
+  const key="mr_ga_payment_return_"+orderId+"_"+result;
+  if(sessionStorage.getItem(key))return;
+  sessionStorage.setItem(key,"1");
+  trackMR("payment_return",{order_id:orderId,result:result||"unknown"});
+  if(result==="success")trackMR("purchase_success",{order_id:orderId});
+  if(result==="pending")trackMR("payment_pending",{order_id:orderId});
+  if(result==="failure")trackMR("payment_failure",{order_id:orderId});
+})();
 
 const stages=[
   {
@@ -408,6 +436,12 @@ async function poll(){
 
     if(d.status==="ready"&&d.pack_url){
       finished=true;
+      const elapsedSeconds=Math.round((Date.now()-startedAt)/1000);
+      const readyKey="mr_ga_pack_ready_"+orderId;
+      if(!sessionStorage.getItem(readyKey)){
+        sessionStorage.setItem(readyKey,"1");
+        trackMR("pack_ready",{order_id:orderId,elapsed_seconds:elapsedSeconds});
+      }
       setProgress(100);
       stepEls.forEach(el=>{
         el.classList.remove("active");
