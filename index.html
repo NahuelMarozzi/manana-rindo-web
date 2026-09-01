@@ -344,7 +344,20 @@ const CONFIG={UPLOAD_WEBHOOK:"https://dailyastroinfo.app.n8n.cloud/webhook/manan
 const $=x=>document.getElementById(x),E={files:$("files"),list:$("fileList"),photoCounter:$("photoCounter"),drop:$("drop"),materia:$("materia"),nivel:$("nivel"),tiempo:$("tiempo"),fecha:$("fecha"),btn:$("btn"),progress:$("progress"),bar:$("bar"),pct:$("pct"),plabel:$("plabel"),status:$("status"),notice:$("notice"),result:$("result"),rtitle:$("rtitle"),rsummary:$("rsummary"),matter:$("matter"),topics:$("topics"),quality:$("quality"),warnings:$("warnings"),subjectChip:$("subjectChip"),reviewPhotos:$("reviewPhotos"),generatePackBtn:$("generatePackBtn"),packLoading:$("packLoading"),packResult:$("packResult"),packBar:$("packBar"),packPct:$("packPct"),packProgressLabel:$("packProgressLabel"),packStatus:$("packStatus"),packIntro:$("packIntro"),packMateria:$("packMateria"),packNivel:$("packNivel"),packTiempo:$("packTiempo"),packSummary:$("packSummary"),packPriorities:$("packPriorities"),examInstructions:$("examInstructions"),packQuestions:$("packQuestions"),packAnswers:$("packAnswers"),packPlan:$("packPlan"),packChecklist:$("packChecklist"),packWarnings:$("packWarnings"),printPack:$("printPack"),backTop:$("backTop"),stepLabel:$("stepLabel"),dev:$("dev"),myPacksCard:$("myPacksCard"),myPacksList:$("myPacksList")};let selected=[],lastAnalysis=null,uploadedFiles=[],orderId=null,selectedPackType='completo';
 (()=>{const d=new Date();d.setDate(d.getDate()+1);E.fecha.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");const q=new URLSearchParams(location.search).get("webhook");if(q)localStorage.setItem("mr_webhook",q);const saved=localStorage.getItem("mr_webhook");if(saved&&CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_"))CONFIG.ANALYZE_WEBHOOK=saved;if(CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_")){E.dev.classList.add("show");E.dev.innerHTML='<b>Falta conectar n8n.</b> Para probar sin editar el archivo abrilo agregando <code>?webhook=URL_DE_PRODUCCION</code> a la dirección.'}})();
 const mb=n=>n/1048576,human=n=>mb(n)>=1?mb(n).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB",esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
-function notice(msg,type="error"){E.notice.className="notice show "+type;E.notice.innerHTML=msg;scrollTo({top:0,behavior:"smooth"})}function clear(){E.notice.className="notice"}function validate(){E.btn.disabled=!(selected.length&&E.materia.value.trim()&&E.nivel.value&&E.tiempo.value&&E.fecha.value)}
+let analysisBusy=false,checkoutBusy=false,lastAnalysisOrderId=null;
+function isBusy(){return analysisBusy||checkoutBusy}
+function hasCheckoutContext(){
+  return !!(lastAnalysis&&orderId&&lastAnalysisOrderId===orderId&&selected.length&&uploadedFiles.length===selected.length);
+}
+function syncBusyControls(){
+  const busy=isBusy();
+  [E.files,E.materia,E.nivel,E.tiempo,E.fecha,E.reviewPhotos].forEach(el=>el.disabled=busy);
+  [E.drop,E.list].forEach(el=>el.classList.toggle("uploadBusy",busy));
+  document.querySelectorAll(".productCard").forEach(el=>el.disabled=busy);
+  E.generatePackBtn.disabled=busy||!hasCheckoutContext();
+  validate();
+}
+function notice(msg,type="error"){E.notice.className="notice show "+type;E.notice.innerHTML=msg;scrollTo({top:0,behavior:"smooth"})}function clear(){E.notice.className="notice"}function validate(){E.btn.disabled=isBusy()||!(selected.length&&E.materia.value.trim()&&E.nivel.value&&E.tiempo.value&&E.fecha.value)}
 
 const PACK_STORAGE_KEY="mr_packs_v7";
 function randomHex(bytes=16){
@@ -381,9 +394,9 @@ function renderSavedPacks(){
 }
 renderSavedPacks();
 
-function resetUploaded(){uploadedFiles=[];orderId=null;lastAnalysis=null;E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show")}
-function render(){resetUploaded();E.list.innerHTML="";E.photoCounter.textContent=`${selected.length} / ${CONFIG.MAX_FILES} fotos agregadas`;selected.forEach((f,i)=>{const x=document.createElement("div");x.className="file";x.innerHTML=`<span>🖼️</span><span class="name">${esc(f.name)}</span><span class="meta">${human(f.size)}</span>`;x.title="Tocá para quitar esta foto";x.onclick=()=>{selected.splice(i,1);render();validate()};E.list.appendChild(x)})}
-E.files.onchange=()=>{clear();const add=[...E.files.files];if(selected.length+add.length>CONFIG.MAX_FILES)return notice(`Podés subir hasta <b>${CONFIG.MAX_FILES} fotos</b>. Ahora tenés ${selected.length}.`);for(const f of add){if(!f.type.startsWith("image/"))return notice(`Solo aceptamos fotos. <b>${esc(f.name)}</b> no es una imagen.`)}selected.push(...add);trackMR("photos_selected",{files_added:add.length,files_total:selected.length});E.files.value="";render();validate()};[E.materia,E.nivel,E.tiempo,E.fecha].forEach(x=>{x.oninput=validate;x.onchange=validate});
+function resetUploaded(){uploadedFiles=[];orderId=null;lastAnalysis=null;lastAnalysisOrderId=null;E.generatePackBtn.disabled=true;E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show")}
+function render(){resetUploaded();E.list.innerHTML="";E.photoCounter.textContent=`${selected.length} / ${CONFIG.MAX_FILES} fotos agregadas`;selected.forEach((f,i)=>{const x=document.createElement("div");x.className="file";x.innerHTML=`<span>🖼️</span><span class="name">${esc(f.name)}</span><span class="meta">${human(f.size)}</span>`;x.title="Tocá para quitar esta foto";x.onclick=()=>{if(isBusy())return;selected.splice(i,1);render();validate()};E.list.appendChild(x)})}
+E.files.onchange=()=>{if(isBusy()){E.files.value="";return}const add=[...E.files.files];if(!add.length)return;clear();if(selected.length+add.length>CONFIG.MAX_FILES)return notice(`Podés subir hasta <b>${CONFIG.MAX_FILES} fotos</b>. Ahora tenés ${selected.length}.`);for(const f of add){if(!f.type.startsWith("image/"))return notice(`Solo aceptamos fotos. <b>${esc(f.name)}</b> no es una imagen.`)}selected.push(...add);trackMR("photos_selected",{files_added:add.length,files_total:selected.length});E.files.value="";render();validate()};[E.materia,E.nivel,E.tiempo,E.fecha].forEach(x=>{x.oninput=validate;x.onchange=validate});
 ["dragenter","dragover"].forEach(ev=>E.drop.addEventListener(ev,e=>{e.preventDefault();E.drop.classList.add("drag")}));["dragleave","drop"].forEach(ev=>E.drop.addEventListener(ev,e=>{e.preventDefault();E.drop.classList.remove("drag")}));
 function prog(p,l,s=""){E.progress.classList.add("show");E.bar.style.width=p+"%";E.pct.textContent=Math.round(p)+"%";E.plabel.textContent=l;E.status.textContent=s}function dataURL(file){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(file)})}
 function loadImg(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src})}
@@ -404,8 +417,8 @@ async function compressPhoto(f){
   return {name:f.name.replace(/\.[^.]+$/,"")+".jpg",mime:"image/jpeg",data_url:await blobDataURL(blob),bytes:blob.size};
 }
 function makeOrderId(){return (crypto.randomUUID?crypto.randomUUID():`mr-${Date.now()}-${Math.random().toString(36).slice(2)}`)}
-async function sendUploadBatch(batch,batchIndex){
-  const payload={client_version:"mr-web-prod-v1",order_id:orderId,batch_index:batchIndex,files:batch.map(x=>({name:x.name,mime:x.mime,data_url:x.data_url}))};
+async function sendUploadBatch(batch,batchIndex,uploadOrderId){
+  const payload={client_version:"mr-web-prod-v1",order_id:uploadOrderId,batch_index:batchIndex,files:batch.map(x=>({name:x.name,mime:x.mime,data_url:x.data_url}))};
   const r=await fetch(CONFIG.UPLOAD_WEBHOOK,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(payload)});
   const raw=await r.text();let data;try{data=JSON.parse(raw)}catch{throw Error("El upload respondió algo que no es JSON: "+raw.slice(0,160))}
   if(!r.ok||data.ok===false)throw Error(data.error||data.message||`HTTP ${r.status}`);
@@ -413,18 +426,20 @@ async function sendUploadBatch(batch,batchIndex){
   return data.files;
 }
 async function uploadSelectedPhotos(){
-  if(uploadedFiles.length===selected.length&&uploadedFiles.length)return uploadedFiles;
-  orderId=makeOrderId();uploadedFiles=[];
+  if(orderId&&uploadedFiles.length===selected.length&&uploadedFiles.length)return uploadedFiles;
+  const photos=[...selected],uploadOrderId=makeOrderId();
+  orderId=uploadOrderId;uploadedFiles=[];
   let batch=[],batchIndex=0,refs=[];
-  for(let i=0;i<selected.length;i++){
-    prog(4+(i/selected.length)*46,"Preparando tus fotos…",`Optimizando foto ${i+1} de ${selected.length}`);
-    const photo=await compressPhoto(selected[i]);batch.push(photo);
-    if(batch.length===CONFIG.UPLOAD_BATCH||i===selected.length-1){
+  for(let i=0;i<photos.length;i++){
+    prog(4+(i/photos.length)*46,"Preparando tus fotos…",`Optimizando foto ${i+1} de ${photos.length}`);
+    const photo=await compressPhoto(photos[i]);batch.push(photo);
+    if(batch.length===CONFIG.UPLOAD_BATCH||i===photos.length-1){
       const first=i-batch.length+2,last=i+1;
-      prog(8+(i/selected.length)*48,"Subiendo tus fotos…",`Subiendo fotos ${first} a ${last} de ${selected.length}`);
-      const got=await sendUploadBatch(batch,batchIndex++);refs.push(...got);batch=[];
+      prog(8+(i/photos.length)*48,"Subiendo tus fotos…",`Subiendo fotos ${first} a ${last} de ${photos.length}`);
+      const got=await sendUploadBatch(batch,batchIndex++,uploadOrderId);refs.push(...got);batch=[];
     }
   }
+  if(orderId!==uploadOrderId)throw Error("Las fotos cambiaron. Volvé a analizarlas antes de continuar.");
   uploadedFiles=refs;
   return refs;
 }
@@ -476,7 +491,7 @@ function setRecommendation(tipo,motivo){
   if(rr)rr.innerHTML=`<b>Nuestra recomendación:</b> ${esc(motivo||"Elegimos la opción que mejor coincide con el tipo de material que subiste.")}`;
   selectPackType(valid);
 }
-document.querySelectorAll(".productCard").forEach(c=>c.addEventListener("click",()=>{selectPackType(c.dataset.pack);const info=PRODUCT_INFO[c.dataset.pack];trackMR("pack_selected",{pack_type:c.dataset.pack,value:info?.price||0,currency:"ARS"});}));
+document.querySelectorAll(".productCard").forEach(c=>c.addEventListener("click",()=>{if(isBusy())return;selectPackType(c.dataset.pack);const info=PRODUCT_INFO[c.dataset.pack];trackMR("pack_selected",{pack_type:c.dataset.pack,value:info?.price||0,currency:"ARS"});}));
 
 function renderResult(a){
   lastAnalysis=a;
@@ -534,8 +549,9 @@ function renderResult(a){
   if(can)setRecommendation(a.recomendacion||"completo",a.motivo_recomendacion||"");
 }
 E.reviewPhotos.onclick=()=>{
+  if(isBusy())return;
   E.drop.scrollIntoView({behavior:"smooth",block:"center"});
-  setTimeout(()=>E.files.click(),450);
+  setTimeout(()=>{if(!isBusy())E.files.click();},450);
 };
 
 function packProg(p,label,status=""){
@@ -601,13 +617,15 @@ function renderPack(p){
   setTimeout(()=>E.packResult.scrollIntoView({behavior:"smooth",block:"start"}),150);
 }
 E.generatePackBtn.onclick=async()=>{
+  if(isBusy())return;
   if(!lastAnalysis)return notice("Primero analizá los apuntes.","warn");
-  if(uploadedFiles.length!==selected.length)return notice("Las fotos cambiaron. Volvé a analizarlas antes de continuar.","warn");
+  if(!hasCheckoutContext())return notice("Necesitamos volver a analizar tus apuntes antes de continuar. Tus fotos siguen seleccionadas.","warn");
+  if(lastAnalysis.puede_generar_pack===false||["ilegible","no_es_material_de_estudio"].includes(lastAnalysis.status))return notice("Agregá fotos más claras y volvé a analizarlas antes de continuar.","warn");
   const info=PRODUCT_INFO[selectedPackType];
   if(!info)return;
 
   clear();
-  E.generatePackBtn.disabled=true;
+  checkoutBusy=true;syncBusyControls();
   E.generatePackBtn.textContent="Conectando con Mercado Pago…";
 
   try{
@@ -638,7 +656,7 @@ E.generatePackBtn.onclick=async()=>{
     setTimeout(()=>{window.location.href=data.checkout_url;},180);
   }catch(e){
     notice(`<b>No pudimos abrir Mercado Pago.</b><br>${esc(e.message)}`);
-    E.generatePackBtn.disabled=false;
+    checkoutBusy=false;syncBusyControls();
     E.generatePackBtn.textContent=`Continuar con ${info.label} · ${moneyARS(info.price)}`;
   }
 };
@@ -646,23 +664,35 @@ E.printPack.onclick=()=>window.print();
 E.backTop.onclick=()=>scrollTo({top:0,behavior:"smooth"});
 
 E.btn.onclick=async()=>{
+  if(isBusy())return;
+  validate();if(E.btn.disabled)return;
+  analysisBusy=true;lastAnalysis=null;lastAnalysisOrderId=null;syncBusyControls();
   trackMR("analysis_started",{files_count:selected.length,materia:E.materia.value.trim(),nivel:E.nivel.value,tiempo:E.tiempo.value});
-  clear();E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show");E.btn.disabled=true;E.drop.classList.add("uploadBusy");
+  clear();E.result.classList.remove("show");E.packResult.classList.remove("show");E.packLoading.classList.remove("show");
   try{
     if(CONFIG.UPLOAD_WEBHOOK.includes("PEGAR_")||CONFIG.ANALYZE_WEBHOOK.includes("PEGAR_"))throw Error("Falta conectar n8n.");
     const refs=await uploadSelectedPhotos();
-    const payload={client_version:"mr-web-prod-v1",order_id:orderId,submitted_at:new Date().toISOString(),materia:E.materia.value.trim(),nivel:E.nivel.value,tiempo_estudio:E.tiempo.value,fecha_examen:E.fecha.value,files:refs};
+    const analysisOrderId=orderId;
+    if(!analysisOrderId||!refs.length||refs.length!==selected.length)throw Error("Necesitamos volver a subir tus fotos. Reintentá el análisis.");
+    const payload={client_version:"mr-web-prod-v1",order_id:analysisOrderId,submitted_at:new Date().toISOString(),materia:E.materia.value.trim(),nivel:E.nivel.value,tiempo_estudio:E.tiempo.value,fecha_examen:E.fecha.value,files:refs};
     prog(62,"Fotos listas ✓","Ahora estamos entendiendo qué temas aparecen.");
     const r=await fetch(CONFIG.ANALYZE_WEBHOOK,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(payload)});
     prog(84,"Leyendo tus apuntes…","Detectando temas y verificando que se entiendan.");
     const raw=await r.text();let data;try{data=JSON.parse(raw)}catch{throw Error("n8n respondió algo que no es JSON: "+raw.slice(0,160))}
     if(!r.ok||data.ok===false)throw Error(data.error||data.message||`HTTP ${r.status}`);
+    if(orderId!==analysisOrderId)throw Error("Las fotos cambiaron. Volvé a analizarlas antes de continuar.");
     const analysisResult=data.analysis||data;
+    lastAnalysisOrderId=analysisOrderId;
     renderResult(analysisResult);
     trackMR("analysis_completed",{files_count:refs.length,status:String(analysisResult?.status||""),can_generate:analysisResult?.puede_generar_pack!==false,recommendation:String(analysisResult?.recomendacion||"")});
     prog(100,"Listo",`${refs.length} fotos analizadas.`);setTimeout(()=>E.result.scrollIntoView({behavior:"smooth"}),200)
   }catch(e){notice(`<b>No pudimos completar el análisis.</b><br>${esc(e.message)}`);prog(0,"No se pudo analizar","Tus fotos siguen seleccionadas. Corregí el problema y reintentá.")}
-  finally{E.drop.classList.remove("uploadBusy");validate()}
+  finally{analysisBusy=false;syncBusyControls()}
 };
+// A page restored from the back/forward cache must allow a checkout retry.
+window.addEventListener("pageshow",event=>{
+  if(event.persisted&&checkoutBusy){checkoutBusy=false;selectPackType(selectedPackType);syncBusyControls();}
+});
+syncBusyControls();
 </script>
 </body></html>
