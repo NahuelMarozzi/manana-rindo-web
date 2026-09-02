@@ -280,6 +280,18 @@ function trackMR(name,params={}){
   }catch{}
 }
 
+// Analytics must never prevent polling or navigation when storage is blocked.
+const analyticsSeen=new Set();
+function claimAnalyticsEvent(key){
+  if(analyticsSeen.has(key))return false;
+  analyticsSeen.add(key);
+  try{
+    if(sessionStorage.getItem(key))return false;
+    sessionStorage.setItem(key,"1");
+  }catch{}
+  return true;
+}
+
 const STATUS_URL="https://dailyastroinfo.app.n8n.cloud/webhook/manana-rindo-estado-orden-v7";
 const q=new URLSearchParams(location.search);
 const orderId=q.get("order_id");
@@ -309,8 +321,7 @@ const startedAt=Date.now();
 (function trackPaymentReturnOnce(){
   if(!orderId)return;
   const key="mr_ga_payment_return_"+orderId+"_"+result;
-  if(sessionStorage.getItem(key))return;
-  sessionStorage.setItem(key,"1");
+  if(!claimAnalyticsEvent(key))return;
   trackMR("payment_return",{order_id:orderId,result:result||"unknown"});
   if(result==="success")trackMR("purchase_success",{order_id:orderId});
   if(result==="pending")trackMR("payment_pending",{order_id:orderId});
@@ -432,14 +443,15 @@ async function poll(){
     u.searchParams.set("order_id",orderId);
 
     const r=await fetch(u.href,{cache:"no-store"});
+    if(!r.ok)throw new Error("Status request failed");
     const d=await r.json();
+    if(!d||typeof d!=="object")throw new Error("Invalid status response");
 
     if(d.status==="ready"&&d.pack_url){
       finished=true;
       const elapsedSeconds=Math.round((Date.now()-startedAt)/1000);
       const readyKey="mr_ga_pack_ready_"+orderId;
-      if(!sessionStorage.getItem(readyKey)){
-        sessionStorage.setItem(readyKey,"1");
+      if(claimAnalyticsEvent(readyKey)){
         trackMR("pack_ready",{order_id:orderId,elapsed_seconds:elapsedSeconds});
       }
       setProgress(100);
