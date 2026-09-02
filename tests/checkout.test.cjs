@@ -19,15 +19,17 @@ function element(){
   };
 }
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
-function setup({pauseCompression=false,pauseAnalysis=false,pauseCheckout=false,failUpload=false,failAnalysis=false,failCheckout=false}={}){
+function setup({pauseCompression=false,pauseAnalysis=false,pauseCheckout=false,failUpload=false,failAnalysis=false,failCheckout=false,blockedStorage=false,savedPacks='[]'}={}){
   const nodes=new Map(),cards=['entender','practicar','completo'].map(pack=>({...element(),dataset:{pack}}));
   const compression=deferred(),analysis=deferred(),analysisStarted=deferred(),checkout=deferred(),requests=[];
   const storage=new Map();
+  storage.set('mr_packs_v7',savedPacks);
   const context=vm.createContext({
     document:{getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},
       querySelectorAll(){return cards;},createElement:element},
     crypto:webcrypto,URLSearchParams,URL,Uint8Array,console,
-    localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+    localStorage:{getItem(k){if(blockedStorage)throw Error('Storage blocked');return storage.get(k)||null;},
+      setItem(k,v){if(blockedStorage)throw Error('Storage blocked');storage.set(k,v);}},
     location:{search:''},window:{location:{href:''},addEventListener(name,fn){this['on'+name]=fn;}},scrollTo(){},setTimeout(){},
     async fetch(url,options){
       const body=JSON.parse(options.body);requests.push({url,body});
@@ -161,4 +163,18 @@ test('cancelling the photo picker keeps the completed analysis',async()=>{
   const app=setup();app.addPhotos(1);await app.nodes.get('btn').onclick();
   const order=app.run('orderId');app.addPhotos(0);
   await app.nodes.get('generatePackBtn').onclick();assert.equal(app.requests.at(-1).body.order_id,order);
+});
+
+test('blocked local storage does not prevent analysis and checkout',async()=>{
+  const app=setup({blockedStorage:true});app.addPhotos(1);
+  await app.nodes.get('btn').onclick();await app.nodes.get('generatePackBtn').onclick();
+  assert.ok(app.requests.find(r=>r.url.includes('crear-checkout'))?.body.order_id);
+});
+
+test('malformed saved packs do not prevent checkout',async()=>{
+  for(const savedPacks of ['null','{}','broken json','[null,7,{"materia":"incomplete"}]']){
+    const app=setup({savedPacks});app.addPhotos(1);
+    await app.nodes.get('btn').onclick();await app.nodes.get('generatePackBtn').onclick();
+    assert.ok(app.requests.find(r=>r.url.includes('crear-checkout'))?.body.order_id,savedPacks);
+  }
 });
