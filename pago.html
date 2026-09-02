@@ -297,6 +297,35 @@ const q=new URLSearchParams(location.search);
 const orderId=q.get("order_id");
 const result=q.get("result")||q.get("status")||"";
 
+// Only the status backend can supply a purchase verified against Mercado Pago.
+// This is best-effort browser measurement, not the payment or delivery gate.
+function trackVerifiedPurchase(d){
+  try{
+    const p=d.purchase;
+    if(d.ok!==true||d.status!=="ready"||d.order_id!==orderId
+      ||!p||p.schema_version!==1||p.verified!==true
+      ||p.transaction_id!=="mr_"+orderId||p.currency!=="ARS"
+      ||typeof p.value!=="number"||!Number.isFinite(p.value)||p.value<=0
+      ||!Array.isArray(p.items)||p.items.length!==1)return;
+    const item=p.items[0];
+    if(!item||!["entender","practicar","completo"].includes(item.item_id)
+      ||typeof item.item_name!=="string"||!item.item_name
+      ||item.quantity!==1||item.price!==p.value)return;
+    const key="mr_ga_purchase_v1_"+p.transaction_id;
+    if(analyticsSeen.has(key))return;
+    try{if(localStorage.getItem(key))return;}catch{}
+    if(typeof gtag!=="function")return;
+    // Keep the same transaction_id if storage is blocked; GA4 also deduplicates it.
+    gtag("event","purchase",{
+      transaction_id:p.transaction_id,currency:p.currency,value:p.value,
+      items:[{item_id:item.item_id,item_name:item.item_name,price:item.price,quantity:1}],
+      transport_type:"beacon"
+    });
+    analyticsSeen.add(key);
+    try{localStorage.setItem(key,"1");}catch{}
+  }catch{}
+}
+
 const title=document.getElementById("title");
 const msg=document.getElementById("msg");
 const ico=document.getElementById("ico");
@@ -323,7 +352,6 @@ const startedAt=Date.now();
   const key="mr_ga_payment_return_"+orderId+"_"+result;
   if(!claimAnalyticsEvent(key))return;
   trackMR("payment_return",{order_id:orderId,result:result||"unknown"});
-  if(result==="success")trackMR("purchase_success",{order_id:orderId});
   if(result==="pending")trackMR("payment_pending",{order_id:orderId});
   if(result==="failure")trackMR("payment_failure",{order_id:orderId});
 })();
@@ -424,9 +452,9 @@ function configureInitialState(){
     return;
   }
 
-  title.textContent="¡Pago realizado!";
-  msg.textContent="Pago confirmado. Ya estamos preparando tu material personalizado.";
-  ico.textContent="✅";
+  title.textContent="Estamos preparando tu pedido";
+  msg.textContent="Estamos comprobando el estado de tu pedido. Tu material se abrirá cuando esté listo.";
+  ico.textContent="🕒";
 }
 
 function pollDelay(){
@@ -449,6 +477,7 @@ async function poll(){
 
     if(d.status==="ready"&&d.pack_url){
       finished=true;
+      trackVerifiedPurchase(d);
       const elapsedSeconds=Math.round((Date.now()-startedAt)/1000);
       const readyKey="mr_ga_pack_ready_"+orderId;
       if(claimAnalyticsEvent(readyKey)){

@@ -1,75 +1,117 @@
-# Medición de pagos: estado y siguiente cambio
+# Compras verificadas: instalación y alcance
 
-Revisión del 2 de septiembre de 2026. Este documento describe un pendiente;
-no declara implementada la confirmación de pagos en Analytics.
+Actualizado el 2 de septiembre de 2026. La web deja de emitir `purchase_success`
+por el parámetro `result=success`. El nuevo evento GA4 `purchase` requiere una
+respuesta del flujo de estado que verifique el pago en Mercado Pago.
 
-## Evidencia del código
+## Qué cambia
 
-- `pago.html` emite `purchase_success` cuando la URL trae `result=success`.
-  No consulta el estado del pago antes de emitirlo. Solo envía `order_id`.
-- La deduplicación actual usa `sessionStorage`: una nueva sesión puede emitir
-  otra vez. Un cliente que paga pero no vuelve al sitio puede no emitir nada.
-- El cliente consulta el estado de la orden y usa `status=ready` y `pack_url`
-  para abrir el material. No se ha verificado el contrato completo del servidor.
-  `ready` por sí solo no se debe reinterpretar como pago aprobado.
-- La acción importada desde GA4 para `purchase_success` quedó secundaria en
-  Google Ads. Su nombre no convierte el evento en prueba contable de una venta.
+El flujo **MR - ESTADO ORDEN V7**, usado por `pago.html`, incorpora una consulta
+GET a Mercado Pago cuando el pack está listo y la orden es de producción.
+Reutiliza la referencia a la credencial del webhook de pagos existente.
+La respuesta de la API debe tener estado HTTP 200, pago `approved`,
+`live_mode=true`, ID de pago coincidente, referencia a la misma orden, moneda
+ARS e importe positivo igual al guardado en la orden. El tipo de pack proviene
+de `analysis_json` de esa orden. El estado almacenado `approved` por sí solo
+no acredita una compra, porque el generador recibe esos campos en su entrada.
 
-## Cambio aplicado y límites
+Solo si se cumplen esas condiciones, el flujo agrega `purchase` a la respuesta:
 
-Las excepciones de almacenamiento y de analítica ya no deben bloquear la
-inicialización, las consultas de estado o la visualización del pack. Si el
-almacenamiento está bloqueado, se conserva una deduplicación en memoria durante
-esa carga de página. No garantiza deduplicación entre pestañas o dispositivos.
-Las respuestas HTTP fallidas del estado se reintentan.
+```json
+{
+  "schema_version": 1,
+  "verified": true,
+  "transaction_id": "mr_ID_DE_ORDEN",
+  "value": 1234.56,
+  "currency": "ARS",
+  "items": [{"item_id":"completo","item_name":"Pack Completo","price":1234.56,"quantity":1}]
+}
+```
 
-No se cambian precios, webhooks, cuenta de pago, presupuesto de anuncios ni la
-semántica del evento existente en este arreglo. No se hicieron compras de prueba.
+El importe del ejemplo es ficticio. No se envían email, teléfono, información
+del comprador ni la respuesta completa de Mercado Pago al navegador o a GA4.
+La web valida el contrato y envía únicamente los campos de comercio electrónico.
+El evento `payment_return` continúa indicando un retorno del navegador.
 
-## Dependencia pendiente: n8n
+La respuesta `ready` y el enlace original al pack se mantienen cuando falla la
+verificación. La consulta adicional tiene timeout de 5 segundos, no reintenta
+y continúa ante errores. No cambia la generación, el cobro ni el envío de email.
+La web es compatible con el flujo anterior: entrega el pack, pero no registra
+compras hasta que reciba la nueva respuesta verificada.
 
-Se necesita una exportación actual del flujo de estado de orden y del flujo que
-verifica pagos de Mercado Pago (sin credenciales ni datos personales). No hubo
-acceso directo a n8n disponible. Una consulta con un identificador de pedido fue
-bloqueada por revisión automática y no se reintentó. No hay verificación de
-esquema ni de estado real del pago a partir de esa consulta.
+## Instalar en n8n
 
-Antes de programar la medición definitiva:
+El JSON se prepara localmente a partir de los dos exports proporcionados:
 
-1. Identificar dónde se consulta el pago en Mercado Pago y dónde se persisten
-   estado aprobado, vínculo con la orden, ID del pago, importe y moneda.
-2. Revisar autenticación y controles de acceso del endpoint de estado. No
-   ampliar la exposición de detalles del pago sin revisar ese contrato.
-3. Elegir la fuente de eventos: backend con datos de atribución permitidos,
-   o frontend después de una respuesta verificada. El backend permite cubrir
-   pagos sin retorno al navegador; el frontend no garantiza esa cobertura.
-4. Emitir el evento recomendado GA4 `purchase` con `transaction_id` estable,
-   `currency`, `value` e `items` a partir de datos del pago y de la orden.
-   No inferir el importe desde la URL ni desde precios estáticos de la web.
-5. Deduplicar por transacción. GA4 documenta la deduplicación de `purchase`
-   por `transaction_id`; no asumir que se aplica igual al evento personalizado
-   `purchase_success`. Un marcador local no es una garantía global.
-6. Migrar la acción de Ads al evento verificado y retirar la acción provisional
-   de compras. No importar dos eventos principales para la misma compra.
+```bash
+node scripts/prepare-status-workflow.cjs \
+  'MR - ESTADO ORDEN V7.json' \
+  'MR PROD - MERCADO PAGO WEBHOOK.json' \
+  'MR-ESTADO-ORDEN-V7-medicion.json'
+```
 
-## Criterios de aceptación
+1. Abrir el flujo existente **MR - ESTADO ORDEN V7**. Descargar una copia del
+   flujo que esté publicado para poder restaurarlo.
+2. En su editor, sustituir los nodos por los del archivo actualizado mediante
+   **Import from File**. Debe quedar un único conjunto de nueve nodos, sin
+   copias duplicadas. El export está marcado inactivo para no activar un
+   segundo webhook de producción accidentalmente.
+3. Comprobar que el nodo **MERCADO PAGO - Verificar Medicion V7** conserva la
+   credencial de producción que usa **MERCADO PAGO - Consultar Pago PROD**.
+   Si n8n pide seleccionarla, elegir esa credencial existente; no pegar tokens
+   en el código ni compartirlos por chat.
+4. Publicar la actualización del flujo original. Su ruta sigue siendo
+   `manana-rindo-estado-orden-v7`. No activar dos flujos con esa misma ruta.
 
-- Una URL manipulada con `result=success` no genera una compra verificada.
-- Un pago pendiente, rechazado o una consulta fallida no genera una compra.
-- Un pago aprobado para otra orden no genera una compra de la orden abierta.
-- Una orden aprobada con importe y moneda válidos produce una transacción.
-- Recargar, abrir otra pestaña y repetir notificaciones no duplica ingresos.
-- Analytics bloqueado o almacenamiento no disponible no impide entregar el pack.
-- Comparar un pago aprobado con Mercado Pago y GA4 DebugView antes de habilitar
-  la acción para pujas por conversiones. No activar pujas de compras solo para
-  quitar el aviso de objetivos sin acciones principales.
+No hace falta modificar **MR - GENERAR + GUARDAR PACK V7** ni el webhook de
+Mercado Pago para esta medición. La publicación de n8n requiere acceso al editor
+del usuario; preparar el archivo no equivale a haberlo instalado.
 
-## Validación del arreglo de entrega
+## Validación y migración de Google Ads
 
-`node --test tests/*.test.cjs`: 22 pruebas locales, con HTTP y Analytics simulados.
-Incluye las regresiones del `order_id` del checkout y fallos de lectura, escritura
-y acceso al almacenamiento. No reemplaza una prueba end-to-end contra n8n.
+Se ejecutaron **63 pruebas locales** con `node --test tests/*.test.cjs`.
+Incluyen pagos válidos, pendientes, rechazados, sandbox, referencias/importe/
+moneda incorrectos, fallos de API y almacenamiento, recargas y regresiones de
+checkout y entrega. El código que se incorpora al export se ejecuta con
+entradas simuladas. Esto no sustituye una ejecución real en la instancia n8n.
 
-Referencias:
-- https://developers.google.com/analytics/devguides/collection/ga4/ecommerce
-- https://developers.google.com/analytics/devguides/collection/ga4/validate-ecommerce
+Después de importar, comprobar una compra autorizada y su ejecución en n8n:
+`purchase` debe aparecer en la respuesta del estado y en GA4 DebugView con el
+mismo importe, ARS e ID de transacción. Recargar no debe generar otro envío
+desde ese navegador. No se hizo una compra ni se consultó una orden real para
+esta validación local.
+
+Después de confirmar esa medición, importar **purchase** desde GA4 a Google
+Ads. Mantener `purchase_success` y las vistas de página como secundarias.
+Usar solo la compra verificada como acción principal de Compra, cuando haya
+sido comprobada. Revisar los objetivos aplicados a la campaña; no convertir
+vistas de página en compras para eliminar un aviso.
+
+Esta entrega no modifica Google Ads: el presupuesto acordado es **20.000 ARS
+totales**, y la estrategia permanece **Maximizar clics**. Un objetivo sin
+acciones principales no demuestra un fallo de instalación de la etiqueta.
+
+## Límites conocidos
+
+- Esta medición requiere que el comprador vuelva a `pago.html` y que el pack
+  llegue a estar listo. No cubre todos los pagos del negocio ni una generación
+  fallida. El cierre del navegador o un bloqueador también puede impedir GA4.
+- Un timeout de Mercado Pago permite entregar el pack, pero omite esa compra
+  en esa visita. No hay una cola de recuperación ni envío desde el servidor.
+- `localStorage` reduce duplicados en el navegador. `transaction_id` estable
+  permite a GA4 deduplicar `purchase`; el marcador no garantiza recepción ni
+  unicidad global entre dispositivos. No se asume esa deduplicación para el
+  antiguo evento personalizado `purchase_success`.
+- La importación no corrige retroactivamente eventos provisionales ni cifras
+  históricas. Los ingresos de Analytics deben contrastarse con Mercado Pago.
+- El flujo de estado ya entrega el enlace del pack a quien conoce la orden.
+  Este cambio conserva ese modelo de acceso; no es una auditoría integral de
+  autorización de todos los endpoints de generación y entrega.
+
+## Referencias
+
+- [GA4: comercio electrónico](https://developers.google.com/analytics/devguides/collection/ga4/ecommerce)
+- [GA4: validar eventos de comercio electrónico](https://developers.google.com/analytics/devguides/collection/ga4/validate-ecommerce)
+- [Mercado Pago: consultar un pago](https://www.mercadopago.com.co/developers/en/reference/online-payments/checkout-api-payments/get-payment/get)
+- [n8n: HTTP Request](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest)
+- [n8n: importar y exportar](https://docs.n8n.io/build/manage-workflows/export-and-import)

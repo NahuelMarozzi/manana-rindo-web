@@ -85,3 +85,75 @@ test('pending return continues polling without emitting legacy purchase_success'
   assert.equal(app.events.filter(e=>e[1]==='purchase_success').length,0);
   assert.ok(app.timers.some(t=>t.ms===700));
 });
+
+function paidResponse(){
+  return {ok:true,status:'ready',order_id:'test-order',pack_url:'https://example.test/pack',
+    purchase:{schema_version:1,verified:true,transaction_id:'mr_test-order',currency:'ARS',value:1234.56,
+      items:[{item_id:'completo',item_name:'Pack Completo',price:1234.56,quantity:1}]}};
+}
+
+test('success URL alone and a legacy ready response cannot register a purchase',async()=>{
+  const app=setup('pago.html');
+  assert.equal(app.events.filter(e=>['purchase','purchase_success'].includes(e[1])).length,0);
+  await app.run('poll()');
+  assert.equal(app.events.filter(e=>['purchase','purchase_success'].includes(e[1])).length,0);
+  assert.ok(app.timers.some(t=>t.ms===700));
+});
+
+for(const result of ['success','pending','']){
+  test('verified payment registers actual value and preserves delivery: '+result,async()=>{
+    const app=setup('pago.html',{response:paidResponse(),result});await app.run('poll()');
+    const purchases=app.events.filter(e=>e[1]==='purchase');
+    assert.equal(purchases.length,1);
+    assert.deepEqual(JSON.parse(JSON.stringify(purchases[0][2])),{
+      transaction_id:'mr_test-order',currency:'ARS',value:1234.56,
+      items:[{item_id:'completo',item_name:'Pack Completo',price:1234.56,quantity:1}],transport_type:'beacon'});
+    assert.equal(app.events.filter(e=>e[1]==='purchase_success').length,0);
+    app.timers.find(t=>t.ms===700).fn();assert.deepEqual(app.navigations,['https://example.test/pack']);
+  });
+}
+
+test('purchase marker survives reloads, without suppressing delivery',async()=>{
+  const session=new Map();
+  const first=setup('pago.html',{response:paidResponse(),session});await first.run('poll()');
+  first.run('trackVerifiedPurchase('+JSON.stringify(paidResponse())+')');
+  assert.equal(first.events.filter(e=>e[1]==='purchase').length,1);
+  const next=setup('pago.html',{response:paidResponse(),session});await next.run('poll()');
+  assert.equal(next.events.filter(e=>e[1]==='purchase').length,0);
+  assert.ok(next.timers.some(t=>t.ms===700));
+});
+
+for(const storageFailure of ['get','set','access']){
+  test('verified purchase remains best effort with blocked storage: '+storageFailure,async()=>{
+    const app=setup('pago.html',{response:paidResponse(),storageFailure});await app.run('poll()');
+    app.run('trackVerifiedPurchase('+JSON.stringify(paidResponse())+')');
+    const purchases=app.events.filter(e=>e[1]==='purchase');assert.equal(purchases.length,1);
+    assert.equal(purchases[0][2].transaction_id,'mr_test-order');
+    assert.ok(app.timers.some(t=>t.ms===700));
+  });
+}
+
+test('unavailable analytics does not mark a purchase sent or delay delivery',async()=>{
+  const session=new Map();
+  const app=setup('pago.html',{response:paidResponse(),analyticsFailure:true,session});await app.run('poll()');
+  assert.equal(session.has('mr_ga_purchase_v1_mr_test-order'),false);
+  assert.ok(app.timers.some(t=>t.ms===700));
+});
+
+test('malformed or unrelated purchase data cannot generate revenue',async()=>{
+  const mutations=[
+    d=>d.ok=false, d=>d.order_id='another-order', d=>d.purchase.verified=false,
+    d=>d.purchase.schema_version=2, d=>d.purchase.transaction_id='mr_another-order',
+    d=>d.purchase.currency='USD', d=>d.purchase.value=0, d=>d.purchase.value=-1,
+    d=>d.purchase.value='1234.56', d=>d.purchase.value=Infinity,
+    d=>d.purchase.items=[], d=>d.purchase.items[0].quantity=2,
+    d=>d.purchase.items[0].price=1,d=>d.purchase.items[0].item_id='unknown',
+    d=>d.purchase.items[0].item_name='', d=>delete d.purchase,
+  ];
+  for(const mutate of mutations){
+    const response=paidResponse();mutate(response);
+    const app=setup('pago.html',{response});await app.run('poll()');
+    assert.equal(app.events.filter(e=>e[1]==='purchase').length,0);
+    assert.ok(app.timers.some(t=>t.ms===700),'measurement failure must not block delivery');
+  }
+});
