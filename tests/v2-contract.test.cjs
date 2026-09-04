@@ -47,3 +47,19 @@ test('all static assets referenced by the landing exist', () => {
     .filter(ref => !/^(?:https?:|mailto:)/.test(ref));
   for (const ref of localRefs) assert.ok(fs.existsSync(path.join(root, ref)), `missing ${ref}`);
 });
+
+test('workflow transitions return the viewport to the interactive card', () => {
+  assert.match(app, /function scrollToAppStart/);
+  assert.match(app, /function goToApp\(\) \{\s*scrollToAppStart\(\)/);
+  assert.match(app, /function renderLoading[\s\S]*?scrollToAppStart\(\)/);
+  assert.match(app, /function renderAnalysis[\s\S]*?scrollToAppStart\(\)/);
+  assert.match(app, /function renderChoose[\s\S]*?scrollToAppStart\(\)/);
+});
+
+test('choosing a Pack updates in place without resetting consent or scroll', () => {
+  const handler = app.match(/document\.querySelectorAll\("\[data-pack\]"\)[\s\S]*?document\.querySelector\("#backAnalysis"\)/)?.[0] || '';
+  assert.match(handler, /classList\.toggle\("selected"/);
+  assert.match(handler, /aria-pressed/);
+  assert.doesNotMatch(handler, /renderChoose\(\)/);
+});
+
