@@ -15,8 +15,6 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-html.is-programmatic-scrolling { scroll-behavior: auto; }
 body {
   margin: 0;
   background: var(--paper);
@@ -345,10 +343,10 @@ h1 em::after { content: ""; height: 7px; position: absolute; left: 1%; right: -2
 }
 
 @media (max-width: 640px) {
-  .site-header { width: calc(100% - 32px); height: 70px; }
+  .site-header { width: calc(100% - 32px); height: 70px; gap: 12px; }
   .brand { font-size: 19px; }
-  .site-header .button { font-size: 0; width: 44px; padding: 0; }
-  .site-header .button span { font-size: 18px; }
+  .site-header .button { width: auto; min-height: 44px; padding: 0 14px; font-size: 12px; white-space: nowrap; }
+  .site-header .button span { font-size: 14px; }
   .hero { width: calc(100% - 32px); min-height: auto; padding: 44px 0 65px; }
   .eyebrow { font-size: 10px; }
   h1 { font-size: 47px; }
