@@ -90,8 +90,8 @@ function updateProgress(view) {
   });
 }
 
-function preferredScrollBehavior() {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+function prefersReducedMotion() {
+  return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 }
 
 let scrollAnimationFrame = null;
@@ -110,13 +110,11 @@ function scrollToElement(element, block = "start", onComplete) {
     const target = Math.min(maxTarget, Math.max(0, rawTarget));
     const distance = target - start;
     const finish = () => {
-      document.documentElement.classList.remove("is-programmatic-scrolling");
       scrollAnimationFrame = null;
       onComplete?.();
     };
 
-    document.documentElement.classList.add("is-programmatic-scrolling");
-    if (preferredScrollBehavior() === "auto" || Math.abs(distance) < 2 || typeof window.requestAnimationFrame !== "function") {
+    if (prefersReducedMotion() || Math.abs(distance) < 2 || typeof window.requestAnimationFrame !== "function") {
       window.scrollTo(0, target);
       finish();
       return;
@@ -525,6 +523,15 @@ document.querySelectorAll("[data-start]").forEach(button => button.addEventListe
     state.pack = text.includes("completo") ? "completo" : text.includes("practicar") ? "practicar" : "entender";
   }
   goToApp();
+}));
+
+document.querySelectorAll('a[href^="#"]:not(.skip-link)').forEach(link => link.addEventListener("click", event => {
+  const hash = link.getAttribute("href");
+  const target = hash ? document.querySelector(hash) : null;
+  if (!target) return;
+  event.preventDefault();
+  if (window.location.hash !== hash) window.history.pushState(null, "", hash);
+  scrollToElement(target);
 }));
 
 document.querySelectorAll("[data-demo-tab]").forEach(button => button.addEventListener("click", () => {
