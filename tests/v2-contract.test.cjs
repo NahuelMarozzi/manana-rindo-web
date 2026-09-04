@@ -51,7 +51,7 @@ test('all static assets referenced by the landing exist', () => {
 
 test('workflow transitions return the viewport to the interactive card', () => {
   assert.match(app, /function scrollToAppStart/);
-  assert.match(app, /function goToApp\(\) \{\s*scrollToAppStart\(\)/);
+  assert.match(app, /function goToApp\(\{ immediate = false \} = \{\}\) \{\s*scrollToAppStart\(\{ immediate \}\)/);
   assert.match(app, /function renderLoading[\s\S]*?scrollToAppStart\(\)/);
   assert.match(app, /function renderAnalysis[\s\S]*?scrollToAppStart\(\)/);
   assert.match(app, /function renderChoose[\s\S]*?scrollToAppStart\(\)/);
@@ -69,5 +69,11 @@ test('mobile navigation uses one controlled scroll system and keeps the header C
   assert.match(app, /a\[href\^="#"\]:not\(\.skip-link\)/);
   assert.match(styles, /\.site-header \.button \{[^}]*font-size:\s*12px/);
   assert.doesNotMatch(styles, /\.site-header \.button \{[^}]*font-size:\s*0/);
+});
+
+test('all pricing cards use an immediate corrected jump to the upload card', () => {
+  assert.match(app, /goToApp\(\{ immediate: Boolean\(priceCard\) \}\)/);
+  assert.match(app, /scrollToAppStart\(\{ immediate \}\)/);
+  assert.match(app, /const correction = block === "start"/);
 });
 
