@@ -96,7 +96,7 @@ function prefersReducedMotion() {
 
 let scrollAnimationFrame = null;
 
-function scrollToElement(element, block = "start", onComplete) {
+function scrollToElement(element, block = "start", onComplete, immediate = false) {
   if (!element) return;
   if (scrollAnimationFrame && typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(scrollAnimationFrame);
   const run = () => {
@@ -114,9 +114,17 @@ function scrollToElement(element, block = "start", onComplete) {
       onComplete?.();
     };
 
-    if (prefersReducedMotion() || Math.abs(distance) < 2 || typeof window.requestAnimationFrame !== "function") {
+    if (immediate || prefersReducedMotion() || Math.abs(distance) < 2 || typeof window.requestAnimationFrame !== "function") {
       window.scrollTo(0, target);
-      finish();
+      if (typeof window.requestAnimationFrame === "function") {
+        scrollAnimationFrame = window.requestAnimationFrame(() => {
+          const correction = block === "start"
+            ? element.getBoundingClientRect().top - offset
+            : element.getBoundingClientRect().top - (window.innerHeight - Math.min(element.getBoundingClientRect().height, window.innerHeight)) / 2;
+          if (Math.abs(correction) > 1) window.scrollTo(0, window.scrollY + correction);
+          finish();
+        });
+      } else finish();
       return;
     }
 
@@ -135,14 +143,14 @@ function scrollToElement(element, block = "start", onComplete) {
   else setTimeout(run, 0);
 }
 
-function scrollToAppStart({ focus = true } = {}) {
+function scrollToAppStart({ focus = true, immediate = false } = {}) {
   scrollToElement(appShell, "start", () => {
     if (focus) appShell.focus({ preventScroll: true });
-  });
+  }, immediate);
 }
 
-function goToApp() {
-  scrollToAppStart();
+function goToApp({ immediate = false } = {}) {
+  scrollToAppStart({ immediate });
 }
 
 function resetRemoteState() {
@@ -518,11 +526,12 @@ window.addEventListener("pageshow", () => {
 });
 
 document.querySelectorAll("[data-start]").forEach(button => button.addEventListener("click", () => {
-  if (button.closest(".price-card")) {
+  const priceCard = button.closest(".price-card");
+  if (priceCard) {
     const text = button.textContent.toLowerCase();
     state.pack = text.includes("completo") ? "completo" : text.includes("practicar") ? "practicar" : "entender";
   }
-  goToApp();
+  goToApp({ immediate: Boolean(priceCard) });
 }));
 
 document.querySelectorAll('a[href^="#"]:not(.skip-link)').forEach(link => link.addEventListener("click", event => {
