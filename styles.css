@@ -16,6 +16,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+html.is-programmatic-scrolling { scroll-behavior: auto; }
 body {
   margin: 0;
   background: var(--paper);
@@ -71,6 +72,7 @@ img { max-width: 100%; display: block; }
   align-items: center;
   gap: 70px;
   position: relative;
+  scroll-margin-top: 18px;
 }
 .hero::before { content: ""; position: absolute; width: 640px; height: 640px; right: -330px; top: -170px; border-radius: 50%; background: radial-gradient(circle, rgba(184,255,56,.3), rgba(184,255,56,0) 68%); pointer-events: none; }
 .eyebrow { margin: 0 0 18px; display: flex; align-items: center; gap: 10px; color: #40505e; font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
@@ -118,7 +120,7 @@ h1 em::after { content: ""; height: 7px; position: absolute; left: 1%; right: -2
 .works-with div { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 28px; color: #cad1d8; font-weight: 700; white-space: nowrap; }
 .works-with span + span::before { content: "·"; margin-right: 28px; color: #5c6d7f; }
 
-.example-section, .how-section, .product-section, .faq-section { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 120px 0; }
+.example-section, .how-section, .product-section, .faq-section { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 120px 0; scroll-margin-top: 18px; }
 .section-heading { max-width: 760px; margin-bottom: 54px; }
 .section-heading.compact { max-width: 680px; }
 .section-heading h2 { font-size: clamp(40px, 4.7vw, 64px); margin: 0 0 20px; }
@@ -184,7 +186,7 @@ h1 em::after { content: ""; height: 7px; position: absolute; left: 1%; right: -2
 .pack-mini i:nth-child(3) { width: 88%; }
 .pack-mini strong { position: absolute; right: 16px; bottom: 13px; background: var(--lime); padding: 5px 8px; border-radius: 7px; }
 
-.pricing-section { background: var(--ink); color: white; padding: 120px max(24px, calc((100vw - 1180px) / 2)); }
+.pricing-section { background: var(--ink); color: white; padding: 120px max(24px, calc((100vw - 1180px) / 2)); scroll-margin-top: 18px; }
 .pricing-section .section-heading p:last-child { color: #aeb9c3; }
 .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: stretch; }
 .price-card { border: 1px solid #34475a; border-radius: var(--radius); padding: 31px; display: flex; flex-direction: column; min-height: 470px; position: relative; }
@@ -208,7 +210,7 @@ h1 em::after { content: ""; height: 7px; position: absolute; left: 1%; right: -2
 .privacy-note { margin-top: 30px; padding: 17px; border: 1px solid var(--line); border-radius: 16px; display: flex; align-items: flex-start; gap: 12px; }
 .privacy-note span { color: var(--purple); }
 .privacy-note p { margin: 0; font-size: 13px; color: var(--muted); }
-.app-shell { background: white; border: 1px solid var(--line); border-radius: 30px; box-shadow: var(--shadow); overflow: hidden; min-height: 620px; }
+.app-shell { background: white; border: 1px solid var(--line); border-radius: 30px; box-shadow: var(--shadow); overflow: hidden; overflow-anchor: none; min-height: 620px; scroll-margin-top: 16px; }
 .app-progress { min-height: 74px; padding: 18px 28px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 11px; }
 .app-progress button { border: 0; background: transparent; display: flex; align-items: center; gap: 7px; color: #93a0ab; font-size: 12px; font-weight: 800; }
 .app-progress button span { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; background: #eef0ed; }
@@ -403,3 +405,4 @@ h1 em::after { content: ""; height: 7px; position: absolute; left: 1%; right: -2
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
