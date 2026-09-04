@@ -6,6 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const privacy = fs.readFileSync(path.join(root, 'privacidad.html'), 'utf8');
 const terms = fs.readFileSync(path.join(root, 'terminos.html'), 'utf8');
 
@@ -61,5 +62,12 @@ test('choosing a Pack updates in place without resetting consent or scroll', () 
   assert.match(handler, /classList\.toggle\("selected"/);
   assert.match(handler, /aria-pressed/);
   assert.doesNotMatch(handler, /renderChoose\(\)/);
+});
+
+test('mobile navigation uses one controlled scroll system and keeps the header CTA readable', () => {
+  assert.doesNotMatch(styles, /html\s*\{[^}]*scroll-behavior:\s*smooth/);
+  assert.match(app, /a\[href\^="#"\]:not\(\.skip-link\)/);
+  assert.match(styles, /\.site-header \.button \{[^}]*font-size:\s*12px/);
+  assert.doesNotMatch(styles, /\.site-header \.button \{[^}]*font-size:\s*0/);
 });
 
