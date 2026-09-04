@@ -90,9 +90,61 @@ function updateProgress(view) {
   });
 }
 
+function preferredScrollBehavior() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
+let scrollAnimationFrame = null;
+
+function scrollToElement(element, block = "start", onComplete) {
+  if (!element) return;
+  if (scrollAnimationFrame && typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(scrollAnimationFrame);
+  const run = () => {
+    const start = window.scrollY;
+    const bounds = element.getBoundingClientRect();
+    const offset = block === "start" ? 16 : 0;
+    const rawTarget = block === "center"
+      ? start + bounds.top - (window.innerHeight - Math.min(bounds.height, window.innerHeight)) / 2
+      : start + bounds.top - offset;
+    const maxTarget = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const target = Math.min(maxTarget, Math.max(0, rawTarget));
+    const distance = target - start;
+    const finish = () => {
+      document.documentElement.classList.remove("is-programmatic-scrolling");
+      scrollAnimationFrame = null;
+      onComplete?.();
+    };
+
+    document.documentElement.classList.add("is-programmatic-scrolling");
+    if (preferredScrollBehavior() === "auto" || Math.abs(distance) < 2 || typeof window.requestAnimationFrame !== "function") {
+      window.scrollTo(0, target);
+      finish();
+      return;
+    }
+
+    const duration = Math.min(520, Math.max(260, Math.abs(distance) * .12));
+    const startedAt = performance.now();
+    const animate = now => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      window.scrollTo(0, start + distance * eased);
+      if (progress < 1) scrollAnimationFrame = window.requestAnimationFrame(animate);
+      else finish();
+    };
+    scrollAnimationFrame = window.requestAnimationFrame(animate);
+  };
+  if (typeof window.requestAnimationFrame === "function") scrollAnimationFrame = window.requestAnimationFrame(run);
+  else setTimeout(run, 0);
+}
+
+function scrollToAppStart({ focus = true } = {}) {
+  scrollToElement(appShell, "start", () => {
+    if (focus) appShell.focus({ preventScroll: true });
+  });
+}
+
 function goToApp() {
-  document.querySelector("#crear").scrollIntoView({ behavior: "smooth", block: "start" });
-  setTimeout(() => appShell.focus({ preventScroll: true }), 350);
+  scrollToAppStart();
 }
 
 function resetRemoteState() {
@@ -134,7 +186,7 @@ function selectFiles(files) {
   renderUpload();
 }
 
-function renderUpload(message = "") {
+function renderUpload(message = "", { scroll = false } = {}) {
   state.view = "upload";
   updateProgress("upload");
   revokePreviewUrls();
@@ -169,6 +221,7 @@ function renderUpload(message = "") {
     renderUpload();
   }));
   document.querySelector("#analyzeButton").addEventListener("click", analyzeNotes);
+  if (scroll) scrollToAppStart();
 }
 
 function renderLoading(title, text) {
@@ -176,6 +229,7 @@ function renderLoading(title, text) {
   updateProgress("loading");
   appView.className = "analysis-loading";
   appView.innerHTML = `<div class="loading-copy"><div class="loading-orbit"></div><h3 id="loadingTitle">${escapeHtml(title)}</h3><p id="loadingText">${escapeHtml(text)}</p><div class="loading-bar"><i id="loadingFill"></i></div><strong class="loading-percent" id="loadingPercent">0%</strong></div>`;
+  scrollToAppStart();
 }
 
 function setLoading(percent, title, text) {
@@ -305,7 +359,7 @@ async function analyzeNotes() {
     setTimeout(renderAnalysis, 350);
   } catch (error) {
     resetRemoteState();
-    renderUpload(`<strong>No pudimos completar el análisis.</strong><br>${escapeHtml(error.message)}`);
+    renderUpload(`<strong>No pudimos completar el análisis.</strong><br>${escapeHtml(error.message)}`, { scroll: true });
   }
 }
 
@@ -355,7 +409,8 @@ function renderAnalysis() {
     ${canContinue ? `<p><strong>Ahora adaptemos el material a vos.</strong></p><div class="form-grid"><div class="field field-wide"><label for="subject">Materia</label><input id="subject" type="text" maxlength="80" value="${escapeHtml(state.materia)}" placeholder="Ej.: Biología"></div><div class="field"><label for="level">Nivel</label><select id="level"><option>Primaria</option><option>Secundaria</option><option>Terciario</option><option>Universidad</option><option>Otro</option></select></div><div class="field"><label for="time">Tiempo disponible</label><select id="time"><option>30 minutos</option><option>1 hora</option><option>2 horas</option><option>3 horas</option><option>Más de 3 horas</option></select></div><div class="field field-wide"><label for="date">¿Cuándo rendís?</label><input id="date" type="date" min="${new Date().toISOString().slice(0, 10)}"></div></div>` : ""}
     <div class="app-actions"><button class="button button-ghost" id="backUpload">${canContinue ? "Cambiar fotos" : "Subir otras fotos"}</button>${canContinue ? `<button class="button button-primary" id="continueChoose">Ver Packs <span>→</span></button>` : ""}</div>`;
 
-  document.querySelector("#backUpload").addEventListener("click", renderUpload);
+  document.querySelector("#backUpload").addEventListener("click", () => renderUpload("", { scroll: true }));
+  scrollToAppStart();
   if (!canContinue) return;
   document.querySelector("#level").value = state.level;
   document.querySelector("#time").value = state.time;
@@ -383,7 +438,7 @@ function renderChoose() {
   appView.innerHTML = `
     <h3>¿Cómo querés prepararte?</h3><p>Elegí el tipo de ayuda que más te sirve para este examen.</p>
     <div class="study-context"><span>${escapeHtml(state.materia)}</span><span>${escapeHtml(state.level)}</span><span>${escapeHtml(state.time)}</span></div>
-    <div class="pack-choice-grid">${choices.map(([id, name, description, price]) => `<button class="pack-choice ${state.pack === id ? "selected" : ""}" data-pack="${id}">${recommended === id ? `<span class="choice-badge">RECOMENDADO</span>` : ""}<strong>${name}</strong><small>${description}</small><b>${price}</b></button>`).join("")}</div>
+    <div class="pack-choice-grid">${choices.map(([id, name, description, price]) => `<button class="pack-choice ${state.pack === id ? "selected" : ""}" data-pack="${id}" aria-pressed="${state.pack === id}">${recommended === id ? `<span class="choice-badge">RECOMENDADO</span>` : ""}<strong>${name}</strong><small>${description}</small><b>${price}</b></button>`).join("")}</div>
     ${cleanText(state.analysis?.motivo_recomendacion) ? `<div class="recommend-reason"><strong>Nuestra recomendación:</strong> ${escapeHtml(cleanText(state.analysis.motivo_recomendacion))}</div>` : ""}
     <div class="checkout-note"><strong>Pago único con Mercado Pago.</strong> No hay suscripción. Después del pago preparamos tu Pack y te llevamos directamente al material.</div>
     <label class="legal-check"><input type="checkbox" id="legalAccept"> <span>Acepto los <a href="terminos.html" target="_blank" rel="noopener">Términos</a> y leí la <a href="privacidad.html" target="_blank" rel="noopener">Política de privacidad</a>.</span></label>
@@ -392,10 +447,16 @@ function renderChoose() {
   document.querySelectorAll("[data-pack]").forEach(button => button.addEventListener("click", () => {
     state.pack = button.dataset.pack;
     track("pack_selected", { pack_type: state.pack, value: PRODUCTS[state.pack].price, currency: "ARS" });
-    renderChoose();
+    document.querySelectorAll("[data-pack]").forEach(choice => {
+      const selected = choice.dataset.pack === state.pack;
+      choice.classList.toggle("selected", selected);
+      choice.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+    document.querySelector("#checkoutButton").innerHTML = `Ir a pagar ${money(PRODUCTS[state.pack].price)} <span>→</span>`;
   }));
   document.querySelector("#backAnalysis").addEventListener("click", renderAnalysis);
   document.querySelector("#checkoutButton").addEventListener("click", startCheckout);
+  scrollToAppStart();
 }
 
 async function startCheckout() {
@@ -403,6 +464,7 @@ async function startCheckout() {
   const errorArea = document.querySelector("#checkoutError");
   if (!document.querySelector("#legalAccept").checked) {
     errorArea.innerHTML = renderNotice("Necesitamos que aceptes los Términos y la Política de privacidad para continuar.");
+    scrollToElement(document.querySelector(".legal-check"), "center");
     return;
   }
   if (!state.analysis || !state.orderId || state.analysisOrderId !== state.orderId || state.uploadedFiles.length !== state.files.length) {
@@ -444,6 +506,7 @@ async function startCheckout() {
     button.disabled = false;
     document.querySelectorAll(".pack-choice, #backAnalysis").forEach(control => { control.disabled = false; });
     button.innerHTML = `Ir a pagar ${money(product.price)} <span>→</span>`;
+    scrollToElement(errorArea, "center");
   }
 }
 
@@ -476,7 +539,7 @@ document.querySelectorAll("[data-demo-tab]").forEach(button => button.addEventLi
 progressButtons.forEach(button => button.addEventListener("click", () => {
   if (button.disabled) return;
   const target = button.dataset.jump;
-  if (target === "upload") renderUpload();
+  if (target === "upload") renderUpload("", { scroll: true });
   if (target === "analysis" && state.analysis) renderAnalysis();
   if (target === "choose" && state.analysis) renderChoose();
 }));
@@ -484,3 +547,4 @@ progressButtons.forEach(button => button.addEventListener("click", () => {
 document.querySelector("#demoTabContent").innerHTML = demoCopy.resumen;
 setDefaultDate();
 renderUpload();
+
